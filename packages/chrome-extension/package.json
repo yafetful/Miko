@@ -1,0 +1,49 @@
+{
+  "name": "chrome-extension",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && node scripts/build.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@coze/api": "^1.0.14",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@esotericsoftware/spine-pixi-v8": "^4.2.70",
+    "@gltf-transform/core": "^4.1.1",
+    "@iconify-icons/solar": "^1.2.3",
+    "@iconify/react": "^5.1.0",
+    "@mui/icons-material": "^6.2.1",
+    "@mui/material": "^6.2.1",
+    "@pixiv/three-vrm": "^3.3.1",
+    "@react-three/drei": "^9.120.4",
+    "@react-three/fiber": "^8.17.10",
+    "@rollup/plugin-json": "^6.1.0",
+    "howler": "^2.2.4",
+    "pixi.js": "^8.6.6",
+    "process": "^0.11.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^7.0.2",
+    "shared": "workspace:*",
+    "three": "^0.171.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "@types/fs-extra": "^11.0.4",
+    "@types/howler": "^2.2.12",
+    "@types/react": "^18.3.16",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "^0.171.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "fs-extra": "^11.2.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "vite": "^5.4.11"
+  }
+}

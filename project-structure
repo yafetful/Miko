@@ -1,0 +1,40 @@
+project-root/
+├── packages/
+│   ├── shared/             
+│   │   ├── src/
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── vite.config.ts
+│   │
+│   ├── web-app/            
+│   │   ├── src/
+│   │   │   ├── App.tsx
+│   │   │   ├── main.tsx
+│   │   │   └── index.css
+│   │   ├── index.html
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── vite.config.ts
+│   │
+│   └── chrome-extension/   
+│       ├── src/
+│       │   ├── popup/
+│       │   │   ├── index.html
+│       │   │   ├── index.tsx
+│       │   │   └── index.css
+│       │   ├── background/
+│       │   │   └── index.ts
+│       │   └── content/
+│       │       └── index.ts
+│       ├── public/
+│       │   └── manifest.json
+│       ├── scripts/
+│       │   └── build.js
+│       ├── package.json
+│       ├── postcss.config.js
+│       ├── tailwind.config.js
+│       ├── tsconfig.json
+│       └── vite.config.ts
+├── package.json
+└── pnpm-workspace.yaml
