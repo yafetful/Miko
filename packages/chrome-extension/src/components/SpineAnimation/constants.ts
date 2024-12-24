@@ -12,7 +12,7 @@ export const ANIMATIONS = {
 
 // 通用动画参数配置
 export const ANIMATION_CONFIG = {
-  CHARACTER_SPACING: 40,
+  CHARACTER_SPACING: 24,
   OFFSCREEN_OFFSET: 50,
   ANIMATION_DURATION: 1000,
 } as const;

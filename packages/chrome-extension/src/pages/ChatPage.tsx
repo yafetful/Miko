@@ -21,22 +21,25 @@ export function ChatPage({ setDarkMode, isDarkMode }: ChatPageProps) {
         right: 0,
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: '80vh',  // 限制最大高度
+        maxHeight: '80vh',
       }}>
         <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'center'}}>
           <Box sx={{ 
             display: 'flex',
             flexDirection: 'column',
             maxWidth: '100%',
-            width: '80%',
+            width: {
+              xs: '100%',  // 小屏幕时宽度 100%
+              md: '80%'    // 中等及以上屏幕时宽度 80%
+            },
             position: 'relative',
-            zIndex: 1,  // 确保不会完全覆盖 VrmViewer
+            zIndex: 1,
           }}>
             {/* 消息区域 */}
             <Box sx={{ 
               flex: 1,
               overflow: 'auto',
-              maxHeight: 'calc(80vh - 180px)',  // 减去输入框和动画的高度
+              maxHeight: 'calc(80vh - 180px)',
             }}>
               <ChatMessages />
             </Box>

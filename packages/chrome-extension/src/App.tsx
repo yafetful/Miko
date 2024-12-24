@@ -25,10 +25,8 @@ function App() {
       <Global styles={globalStyles} />
       <ChatProvider>
           <Box sx={{ 
-            minWidth: '400px',
             width: '100%',
-            height: '100vh',
-            minHeight: '620px',
+            height: '100%',
             overflow: 'hidden'
           }}>
             <ChatPage setDarkMode={setIsDarkMode} isDarkMode={isDarkMode} />

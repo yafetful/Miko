@@ -14,7 +14,7 @@ export const CHARACTER_SETS: Record<string, CharacterSet> = {
       }
     },
     config: {
-      scale: 0.25,
+      scale: 0.2,
       yOffset: 12,
       defaultMix: 0.2,
       walkSpeed: 1.5,
@@ -51,7 +51,7 @@ export const CHARACTER_SETS: Record<string, CharacterSet> = {
       }
     },
     config: {
-      scale: 0.3,
+      scale: 0.2,
       yOffset: 6,
       defaultMix: 0.2,
       walkSpeed: 1.2,
