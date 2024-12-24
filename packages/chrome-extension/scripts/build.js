@@ -24,11 +24,12 @@ async function copyFiles() {
     resolve(distDir, 'manifest.json')
   );
 
-  // 复制图标和资源文件（如果存在）
-  const publicAssetsDir = resolve(__dirname, '../public/assets');
-  if (existsSync(publicAssetsDir)) {
-    await cp(publicAssetsDir, assetsDir, { recursive: true });
-  }
+  // 确保复制所有资源文件
+  await cp(
+    resolve(__dirname, '../public/assets'),
+    resolve(distDir, 'assets'),
+    { recursive: true }
+  );
 
   // 创建 background.js
   const backgroundContent = `

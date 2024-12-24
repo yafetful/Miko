@@ -45,7 +45,10 @@
       "resources": [
         "assets/*",
         "*.vrm",
-        "*.vrma"
+        "*.vrma",
+        "*.json",
+        "*.atlas",
+        "*.png"
       ],
       "matches": ["<all_urls>"]
     }

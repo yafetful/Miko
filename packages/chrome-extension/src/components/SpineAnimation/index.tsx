@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { Application, Assets } from 'pixi.js';
-import { Spine } from '@esotericsoftware/spine-pixi-v8';
+import '@pixi/unsafe-eval'
+import { Spine } from '@esotericsoftware/spine-pixi-v7'
 import { Howl } from 'howler';
 import { DuotoneIcon } from '../DuotoneIcon';
 import { SpineAnimationProps, SoundType } from './types';
@@ -105,14 +106,14 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
 
   const cleanup = () => {
     if (appRef.current) {
-      if (appRef.current.canvas) {
-        appRef.current.canvas.style.opacity = '0';
-        appRef.current.canvas.style.visibility = 'hidden';
+      if (appRef.current.view) {
+        (appRef.current.view as HTMLCanvasElement).style.opacity = '0';
+        (appRef.current.view as HTMLCanvasElement).style.visibility = 'hidden';
       }
 
       requestAnimationFrame(() => {
-        if (containerRef.current && appRef.current?.canvas.parentNode === containerRef.current) {
-          containerRef.current.removeChild(appRef.current.canvas);
+        if (containerRef.current && appRef.current?.view.parentNode === containerRef.current) {
+          containerRef.current.removeChild(appRef.current.view as HTMLCanvasElement);
         }
         appRef.current?.destroy(true);
         appRef.current = null;
@@ -137,12 +138,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     cleanup();
     if (!containerRef.current) return;
 
-    const app = new Application();
-    appRef.current = app;
-
-    containerRef.current.style.backgroundColor = 'transparent';
-
-    await app.init({
+    const app = new Application({
       width: 600,
       height: 80,
       backgroundColor: 0x000000,
@@ -154,14 +150,18 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
       clearBeforeRender: true,
       preserveDrawingBuffer: false,
     });
+    
+    appRef.current = app;
 
-    app.canvas.style.opacity = '0';
-    containerRef.current.appendChild(app.canvas);
+    containerRef.current.style.backgroundColor = 'transparent';
+    
+    (app.view as HTMLCanvasElement).style.opacity = '0';
+    containerRef.current.appendChild(app.view as HTMLCanvasElement);
     
     requestAnimationFrame(() => {
-      if (app.canvas) {
-        app.canvas.style.opacity = '1';
-        app.canvas.style.transition = 'opacity 0.3s';
+      if (app.view) {
+        (app.view as HTMLCanvasElement).style.opacity = '1';
+        (app.view as HTMLCanvasElement).style.transition = 'opacity 0.3s';
       }
     });
 
@@ -169,8 +169,15 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     const spineAssets = characterSet.assets;
     const config = characterSet.config;
 
-    Assets.add(spineAssets.data);
-    Assets.add(spineAssets.atlas);
+    const assetUrl = (path: string) => chrome.runtime.getURL(path);
+    
+    Assets.add(spineAssets.data.alias, assetUrl(spineAssets.data.src));
+    Assets.add(spineAssets.atlas.alias, assetUrl(spineAssets.atlas.src));
+    // Assets.add({
+    //   [spineAssets.data.alias]: assetUrl(spineAssets.data.src),
+    //   [spineAssets.atlas.alias]: assetUrl(spineAssets.atlas.src)
+    // });
+    
     await Assets.load([spineAssets.data.alias, spineAssets.atlas.alias]);
 
     const characters = getCharacters(currentCharacterSet);
@@ -207,7 +214,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
         }
       });
 
-      app.stage.addChild(spineboy);
+      app.stage.addChild(spineboy as any);
       spineboysRef.current.push(spineboy);
     });
 
@@ -263,9 +270,9 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     
     await Promise.all(promises);
 
-    if (appRef.current?.canvas) {
-      appRef.current.canvas.style.transition = 'opacity 0.3s';
-      appRef.current.canvas.style.opacity = '0';
+    if (appRef.current?.view) {
+      (appRef.current.view as HTMLCanvasElement).style.transition = 'opacity 0.3s';
+      (appRef.current.view as HTMLCanvasElement).style.opacity = '0';
     }
 
     await new Promise(resolve => setTimeout(resolve, 300));

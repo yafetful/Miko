@@ -12,18 +12,19 @@
     "@coze/api": "^1.0.14",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@esotericsoftware/spine-pixi-v8": "^4.2.70",
+    "@esotericsoftware/spine-pixi-v7": "4.2.70",
     "@gltf-transform/core": "^4.1.1",
     "@iconify-icons/solar": "^1.2.3",
     "@iconify/react": "^5.1.0",
     "@mui/icons-material": "^6.2.1",
     "@mui/material": "^6.2.1",
+    "@pixi/unsafe-eval": "7.4.2",
     "@pixiv/three-vrm": "^3.3.1",
     "@react-three/drei": "^9.120.4",
     "@react-three/fiber": "^8.17.10",
     "@rollup/plugin-json": "^6.1.0",
     "howler": "^2.2.4",
-    "pixi.js": "^8.6.6",
+    "pixi.js": "7.4.2",
     "process": "^0.11.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -45,5 +46,9 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
     "vite": "^5.4.11"
+  },
+  "resolutions": {
+    "pixi.js": "7.4.2",
+    "@pixi/core": "7.4.2"
   }
 }

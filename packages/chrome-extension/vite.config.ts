@@ -15,11 +15,12 @@ export default defineConfig({
       },
       output: {
         entryFileNames: '[name].js',
-        assetFileNames: 'assets/[name].[ext]',
+        assetFileNames: 'assets/[name][extname]',
         chunkFileNames: '[name].js',
         dir: 'dist'
       }
-    }
+    },
+    assetsInlineLimit: 0,
   },
   resolve: {
     alias: {
