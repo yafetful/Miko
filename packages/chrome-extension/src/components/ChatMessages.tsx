@@ -9,7 +9,7 @@ const moveUpAnimation = keyframes`
     transform: translateY(0);
   }
   to {
-    transform: translateY(-40px); // 向上移动的距离
+    transform: translateY(-40px);
   }
 `;
 
@@ -50,9 +50,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: isUser ? 'flex-end' : 'flex-start',
-        px: '50px',
-        mb: 2,
-        maxWidth: '80%',
+        px: {
+          xs: '0px',
+          sm: isUser ? '0px' : '50px'
+        },
+        width: {
+          xs: '100%',  // 小屏幕时宽度100%
+          sm: '80%'    // 大屏幕时宽度80%
+        },
         alignSelf: isUser ? 'flex-end' : 'flex-start',
         willChange: 'transform',
         animation: isMovingUp 
@@ -64,9 +69,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
     >
       <Box sx={{ 
         [isUser ? 'mr' : 'ml']: 2, 
+        py: 1,
         display: 'flex', 
         alignItems: 'center', 
-        mb: 1,
         gap: 1,
       }}>
         {isUser ? (
@@ -102,14 +107,20 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
       <Paper sx={{
         p: 2,
-        width: '100%',
+        width: 'auto',
+        maxWidth: '100%',
         borderRadius: 2,
         border: 2,
         borderColor: isUser ? 'primary.main' : 'secondary.main',
         backgroundColor: 'background.paper',
         boxShadow: 3,
+        display: 'inline-block',
       }}>
-        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        <Typography sx={{ 
+          whiteSpace: 'pre-wrap', 
+          wordBreak: 'break-word',
+          maxWidth: '100%',
+        }}>
           {message.content}
         </Typography>
       </Paper>
@@ -192,7 +203,6 @@ export function ChatMessages() {
       display: 'flex', 
       flexDirection: 'column', 
       position: 'relative',
-      py: 2,
       '&::-webkit-scrollbar': { display: 'none' },
       scrollbarWidth: 'none',
       msOverflowStyle: 'none'

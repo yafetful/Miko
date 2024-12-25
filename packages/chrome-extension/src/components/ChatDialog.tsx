@@ -178,7 +178,7 @@ export function ChatDialog() {
             onClick={() => setHistoryOpen(true)} 
             size="medium"
           >
-            <DuotoneIcon icon="solar:history-bold-duotone" size="medium" />
+            <DuotoneIcon icon="solar:chat-round-dots-bold-duotone" size="medium" />
           </IconButton>
         </Box>
 
@@ -207,7 +207,7 @@ export function ChatDialog() {
                   color="primary"
                   size="medium"
                 >
-                  <DuotoneIcon icon="solar:arrow-right-up-bold-duotone" size="medium" />
+                  <DuotoneIcon icon="solar:map-arrow-right-bold" size="medium" />
                 </IconButton>
               </InputAdornment>
             )

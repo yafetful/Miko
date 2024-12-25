@@ -57,7 +57,6 @@ export const SpineControls: React.FC<SpineControlsProps> = ({
             <IconButton
               onClick={onToggleSound}
               size="small"
-              color={isSoundEnabled ? 'primary' : 'default'}
             >
               <DuotoneIcon 
                 icon={isSoundEnabled ? 'solar:volume-loud-bold-duotone' : 'solar:volume-cross-bold-duotone'}
@@ -72,10 +71,9 @@ export const SpineControls: React.FC<SpineControlsProps> = ({
         <IconButton
           onClick={onToggleActive}
           size="small"
-          color={isActive ? 'primary' : 'default'}
         >
           <DuotoneIcon 
-            icon="solar:cat-bold-duotone"
+            icon={isActive ? 'solar:eye-closed-line-duotone' : 'solar:eye-bold-duotone'}
             size="small"
           />
         </IconButton>
