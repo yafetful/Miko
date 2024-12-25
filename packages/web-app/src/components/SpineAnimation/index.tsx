@@ -5,8 +5,9 @@ import { Spine } from '@esotericsoftware/spine-pixi-v8';
 import { Howl } from 'howler';
 import { DuotoneIcon } from '../DuotoneIcon';
 import { SpineAnimationProps, SoundType } from './types';
-import { getCharacters, punctuationMap, ANIMATIONS, ANIMATION_CONFIG, SOUNDS } from './constants';
+import { getCharacters, ANIMATIONS, ANIMATION_CONFIG, SOUNDS } from './constants';
 import { CHARACTER_SETS } from './characterSets';
+import { SpineControls } from './SpineControls';
 
 export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => {
   const [isActive, setIsActive] = useState(true);
@@ -41,10 +42,6 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
       });
       audioInitialized.current = true;
     }
-  };
-
-  const convertToPunctuation = (char: string): string => {
-    return punctuationMap[char] || char;
   };
 
   const triggerAnimation = (key: string) => {
@@ -104,38 +101,39 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   };
 
   const cleanup = () => {
-    if (appRef.current) {
-      if (appRef.current.canvas) {
-        appRef.current.canvas.style.opacity = '0';
-        appRef.current.canvas.style.visibility = 'hidden';
+    if (appRef.current?.canvas) {
+      const canvas = appRef.current.canvas as HTMLCanvasElement;
+      
+      if (containerRef.current && canvas.parentNode === containerRef.current) {
+        containerRef.current.removeChild(canvas);
       }
-
-      requestAnimationFrame(() => {
-        if (containerRef.current && appRef.current?.canvas.parentNode === containerRef.current) {
-          containerRef.current.removeChild(appRef.current.canvas);
-        }
-        appRef.current?.destroy(true);
-        appRef.current = null;
-
-        spineboysRef.current = [];
-        Object.values(soundsRef.current).forEach(sound => {
-          if (sound) {
-            sound.unload();
-          }
-        });
-        soundsRef.current = {
-          [SOUNDS.HEY]: null,
-          [SOUNDS.HUH]: null,
-          [SOUNDS.PLUH]: null
-        };
-        audioInitialized.current = false;
-      });
     }
+
+    appRef.current?.destroy(true);
+    appRef.current = null;
+
+    spineboysRef.current = [];
+
+    Object.values(soundsRef.current).forEach(sound => sound?.unload());
+    soundsRef.current = {
+      [SOUNDS.HEY]: null,
+      [SOUNDS.HUH]: null,
+      [SOUNDS.PLUH]: null
+    };
+    
+    audioInitialized.current = false;
   };
 
   const initApp = async () => {
-    cleanup();
     if (!containerRef.current) return;
+
+    while (containerRef.current.firstChild) {
+      containerRef.current.removeChild(containerRef.current.firstChild);
+    }
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    const containerWidth = containerRef.current.getBoundingClientRect().width;
 
     const app = new Application();
     appRef.current = app;
@@ -143,7 +141,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     containerRef.current.style.backgroundColor = 'transparent';
 
     await app.init({
-      width: 600,
+      width: containerWidth,
       height: 80,
       backgroundColor: 0x000000,
       backgroundAlpha: 0,
@@ -181,9 +179,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
         scale: config.scale,
       });
 
-      const totalWidth = characters.length * ANIMATION_CONFIG.CHARACTER_SPACING;
-      const startX = (app.screen.width - totalWidth) / 2;
-      spineboy.x = startX + index * ANIMATION_CONFIG.CHARACTER_SPACING;
+      spineboy.x = -140;
 
       spineboy.y = app.screen.height + config.yOffset;
       
@@ -209,15 +205,11 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
 
       app.stage.addChild(spineboy);
       spineboysRef.current.push(spineboy);
+      playEnterAnimation();
     });
-
-    const inputEl = document.createElement('input');
-    inputEl.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
-    containerRef.current?.appendChild(inputEl);
 
     return () => {
       window.removeEventListener('character-input', handleCharacterInput as EventListener);
-      containerRef.current?.removeChild(inputEl);
       Object.values(soundsRef.current).forEach(sound => sound?.unload());
       app.destroy();
     };
@@ -273,16 +265,14 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   };
 
   const playEnterAnimation = async () => {
-    await initApp();
     if (!appRef.current) return;
     
     const characterSet = CHARACTER_SETS[currentCharacterSet];
-    console.log('characterSet', characterSet);
     const config = characterSet.config;
     const characters = getCharacters(currentCharacterSet);
     
     spineboysRef.current.forEach((spineboy, index) => {
-      spineboy.x = -ANIMATION_CONFIG.OFFSCREEN_OFFSET;
+      spineboy.x = -ANIMATION_CONFIG.OFFSCREEN_OFFSET - ANIMATION_CONFIG.CHARACTER_SPACING;
       spineboy.scale.x = Math.abs(spineboy.scale.x);
       const walkTrack = spineboy.state.setAnimation(0, ANIMATIONS.WALK, true);
       if (walkTrack) {
@@ -291,7 +281,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     });
     
     const totalWidth = characters.length * ANIMATION_CONFIG.CHARACTER_SPACING;
-    const finalStartX = (appRef.current.screen.width - totalWidth) / 2;
+    const finalStartX = (appRef.current.screen.width - totalWidth) / 2 + ANIMATION_CONFIG.CHARACTER_SPACING;
     
     const promises = spineboysRef.current.map((spineboy, index) => {
       return new Promise<void>(resolve => {
@@ -340,9 +330,8 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   useEffect(() => {
     const handleCharacterChange = async () => {
       if (isChangingCharacter) {
-        setIsActive(true);
+        initApp();
         audioInitialized.current = false;
-        await playEnterAnimation();
         initAudio();
         setIsChangingCharacter(false);
       }
@@ -357,6 +346,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
       alignItems: 'center',
       width: '100%',
       height: '80px',
+      position: 'relative'
     }}>
       <Box 
         ref={containerRef}
@@ -364,58 +354,21 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
           flex: 1,
           height: '100%',
           visibility: isActive ? 'visible' : 'hidden',
+          overflow: 'visible',
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%'
         }} 
       />
       
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 1, 
-        pr: 2,
-        ml: 'auto',
-      }}>
-        {isActive && (
-          <>
-            <Tooltip title={`Switch to ${currentCharacterSet === 'pengu' ? 'Capybara' : 'Pengu'}`}>
-              <IconButton
-                onClick={toggleCharacter}
-                size="small"
-                color="primary"
-              >
-                <DuotoneIcon 
-                  icon="solar:ghost-bold-duotone"
-                  size="small"
-                />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={`${isSoundEnabled ? 'Mute' : 'Turn On'}`}>
-              <IconButton
-                onClick={toggleSound}
-                size="small"
-                color={isSoundEnabled ? 'primary' : 'default'}
-              >
-                <DuotoneIcon 
-                  icon={isSoundEnabled ? 'solar:volume-loud-bold-duotone' : 'solar:volume-cross-bold-duotone'}
-                  size="small"
-                />
-              </IconButton>
-            </Tooltip>
-          </>
-        )}
-        
-        <Tooltip title={`${isActive ? 'Hide' : 'Show'}`}>
-          <IconButton
-            onClick={toggleActive}
-            size="small"
-            color={isActive ? 'primary' : 'default'}
-          >
-            <DuotoneIcon 
-              icon="solar:cat-bold-duotone"
-              size="small"
-            />
-          </IconButton>
-        </Tooltip>
-      </Box>
+      <SpineControls 
+        isActive={isActive}
+        isSoundEnabled={isSoundEnabled}
+        currentCharacterSet={currentCharacterSet}
+        onToggleCharacter={toggleCharacter}
+        onToggleSound={toggleSound}
+        onToggleActive={toggleActive}
+      />
     </Box>
   );
 };

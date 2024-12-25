@@ -36,7 +36,10 @@ export function ChatPage() {
             display: 'flex',
             flexDirection: 'column',
             maxWidth: '100%',
-            width: '80%',
+            width: {
+              xs: '100%',  // 小屏幕时宽度 100%
+              md: '80%'    // 中等及以上屏幕时宽度 80%
+            },
             position: 'relative',
             zIndex: 1,  // 确保不会完全覆盖 VrmViewer
           }}>

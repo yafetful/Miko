@@ -8,6 +8,7 @@ import { DuotoneIcon } from './DuotoneIcon';
 import { chatStorage } from '../utils/chatStorage';
 import { ChatHistory } from './ChatHistory';
 import { ViewerContext } from "./vrmViewer/viewerContext";
+import { color } from 'three/src/nodes/TSL.js';
 
 export function ChatDialog() {
   const [message, setMessage] = useState('');
@@ -188,7 +189,7 @@ export function ChatDialog() {
             onClick={() => setHistoryOpen(true)} 
             size="medium"
           >
-            <DuotoneIcon icon="solar:history-bold-duotone" size="medium" />
+            <DuotoneIcon icon="solar:chat-round-dots-bold-duotone" size="medium" />
           </IconButton>
         </Box>
 
@@ -199,6 +200,7 @@ export function ChatDialog() {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={isAuthenticated ? "Type your message..." : "Please connect wallet and sign in first"}
+          disabled={!isAuthenticated}
           sx={{
             bgcolor:'background.paper',
             borderRadius: '32px',
@@ -214,10 +216,10 @@ export function ChatDialog() {
                 <IconButton
                   type="submit"
                   disabled={!isAuthenticated || !message.trim() || loading}
-                  color="primary"
+                  sx={{ color: 'primary.main' }}
                   size="medium"
                 >
-                  <DuotoneIcon icon="solar:arrow-right-up-bold-duotone" size="medium" />
+                  <DuotoneIcon icon="solar:map-arrow-right-bold" size="medium" />
                 </IconButton>
               </InputAdornment>
             )
