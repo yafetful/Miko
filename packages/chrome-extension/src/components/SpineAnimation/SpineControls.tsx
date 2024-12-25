@@ -23,22 +23,19 @@ export const SpineControls: React.FC<SpineControlsProps> = ({
     <Box sx={{ 
       display: 'flex',
       gap: 1,
-      flexDirection: {
-        xs: 'column',  // 小屏幕时垂直排列
-        sm: 'row'      // 大屏幕时水平排列
-      },
+      flexDirection:'row',
       position: 'absolute',
       right: {
-        xs: '8px',    // 小屏幕时靠右
-        sm: '16px'    // 大屏幕时靠右多一点
-      },
-      top: {
-        xs: '-48px',  // 小屏幕时往上移
-        sm: '50%'     // 大屏幕时垂直居中
+        xs: '50%',    // 小屏幕时居中
+        sm: '16px'    // 大屏幕时靠右
       },
       transform: {
-        xs: 'none',
-        sm: 'translateY(-50%)'
+        xs: 'translateX(60%)',  // 小屏幕时向右移动自身宽度的50%以实现居中
+        sm: 'none'              // 大屏幕时不需要位移
+      },
+      bottom: {
+        xs: '-96px',  // 小屏幕时往上移
+        sm: '8px'    // 大屏幕时垂直居中
       }
     }}>
       {isActive && (

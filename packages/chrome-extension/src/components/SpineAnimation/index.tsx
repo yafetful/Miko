@@ -26,22 +26,29 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   });
 
   const initAudio = () => {
-    if (!audioInitialized.current) {
-      const characters = getCharacters(currentCharacterSet);
-      characters.forEach(char => {
-        if (!soundsRef.current[char.sound as SoundType]) {
-          const sound = new Howl({
-            src: Array.isArray(char.soundAsset.src) ? char.soundAsset.src : [char.soundAsset.src],
-            volume: char.soundAsset.volume,
-            preload: true,
-            format: ['mp3', 'webm'],
-            mute: !isSoundEnabled,
-          });
-          soundsRef.current[char.sound as SoundType] = sound;
-        }
+    if (audioInitialized.current) return;
+
+    const characters = getCharacters(currentCharacterSet);
+    
+    characters.forEach(char => {
+      const soundType = char.sound as SoundType;
+      
+      if (soundsRef.current[soundType]) return;
+
+      const sound = new Howl({
+        src: Array.isArray(char.soundAsset.src) 
+          ? char.soundAsset.src 
+          : [char.soundAsset.src],
+        volume: char.soundAsset.volume,
+        preload: true,
+        format: ['mp3', 'webm'],
+        mute: !isSoundEnabled,
       });
-      audioInitialized.current = true;
-    }
+
+      soundsRef.current[soundType] = sound;
+    });
+
+    audioInitialized.current = true;
   };
 
   const triggerAnimation = (key: string) => {
@@ -101,43 +108,30 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   };
 
   const cleanup = () => {
-    if (appRef.current) {
-      if (appRef.current.view) {
-        (appRef.current.view as HTMLCanvasElement).style.opacity = '0';
-        (appRef.current.view as HTMLCanvasElement).style.visibility = 'hidden';
+    if (appRef.current?.view) {
+      const canvas = appRef.current.view as HTMLCanvasElement;
+      
+      if (containerRef.current && canvas.parentNode === containerRef.current) {
+        containerRef.current.removeChild(canvas);
       }
-
-      requestAnimationFrame(() => {
-        if (containerRef.current && appRef.current?.view.parentNode === containerRef.current) {
-          containerRef.current.removeChild(appRef.current.view as HTMLCanvasElement);
-        }
-        appRef.current?.destroy(true);
-        appRef.current = null;
-
-        spineboysRef.current = [];
-        Object.values(soundsRef.current).forEach(sound => {
-          if (sound) {
-            sound.unload();
-          }
-        });
-        soundsRef.current = {
-          [SOUNDS.HEY]: null,
-          [SOUNDS.HUH]: null,
-          [SOUNDS.PLUH]: null
-        };
-        audioInitialized.current = false;
-      });
     }
+
+    appRef.current?.destroy(true);
+    appRef.current = null;
+
+    spineboysRef.current = [];
+
+    Object.values(soundsRef.current).forEach(sound => sound?.unload());
+    soundsRef.current = {
+      [SOUNDS.HEY]: null,
+      [SOUNDS.HUH]: null,
+      [SOUNDS.PLUH]: null
+    };
+    
+    audioInitialized.current = false;
   };
 
   const initApp = async () => {
-    await new Promise<void>(resolve => {
-      cleanup();
-      requestAnimationFrame(() => {
-        resolve();
-      });
-    });
-
     if (!containerRef.current) return;
 
     while (containerRef.current.firstChild) {
@@ -198,7 +192,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
         scale: config.scale,
       });
 
-      spineboy.x = 80 + index * ANIMATION_CONFIG.CHARACTER_SPACING;
+      spineboy.x = -140;
       spineboy.y = app.screen.height + config.yOffset;
       
       spineboy.scale.x = 1 * char.direction;
@@ -223,6 +217,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
 
       app.stage.addChild(spineboy as any);
       spineboysRef.current.push(spineboy);
+      playEnterAnimation();
     });
 
     return () => {
@@ -282,7 +277,6 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   };
 
   const playEnterAnimation = async () => {
-    await initApp();
     if (!appRef.current) return;
     
     const characterSet = CHARACTER_SETS[currentCharacterSet];
@@ -290,7 +284,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     const characters = getCharacters(currentCharacterSet);
     
     spineboysRef.current.forEach((spineboy, index) => {
-      spineboy.x = -ANIMATION_CONFIG.OFFSCREEN_OFFSET;
+      spineboy.x = -ANIMATION_CONFIG.OFFSCREEN_OFFSET - ANIMATION_CONFIG.CHARACTER_SPACING;
       spineboy.scale.x = Math.abs(spineboy.scale.x);
       const walkTrack = spineboy.state.setAnimation(0, ANIMATIONS.WALK, true);
       if (walkTrack) {
@@ -299,7 +293,7 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
     });
     
     const totalWidth = characters.length * ANIMATION_CONFIG.CHARACTER_SPACING;
-    const finalStartX = (appRef.current.screen.width - totalWidth) / 2;
+    const finalStartX = (appRef.current.screen.width - totalWidth) / 2 + ANIMATION_CONFIG.CHARACTER_SPACING;
     
     const promises = spineboysRef.current.map((spineboy, index) => {
       return new Promise<void>(resolve => {
@@ -348,9 +342,9 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
   useEffect(() => {
     const handleCharacterChange = async () => {
       if (isChangingCharacter) {
-        setIsActive(true);
+        initApp();
+        // setIsActive(true);
         audioInitialized.current = false;
-        await playEnterAnimation();
         initAudio();
         setIsChangingCharacter(false);
       }
@@ -373,6 +367,10 @@ export const SpineAnimation: React.FC<SpineAnimationProps> = ({ onKeyDown }) => 
           flex: 1,
           height: '100%',
           visibility: isActive ? 'visible' : 'hidden',
+          overflow: 'visible',
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%'
         }} 
       />
       

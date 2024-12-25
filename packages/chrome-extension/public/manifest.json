@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Miko AI Assistant",
+  "name": "Miko",
   "version": "1.0.0",
   "description": "AI powered Web3 assistant",
   "permissions": [
