@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ThemeProvider, CssBaseline, IconButton, Box } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lightTheme, darkTheme } from './theme';
 import { ChatPage } from './pages/ChatPage';
@@ -13,6 +12,7 @@ import { ChatProvider } from './contexts/ChatContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Global } from '@emotion/react';
 import { globalStyles } from './theme/globalStyles';
+import { DuotoneIcon } from './components/DuotoneIcon';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -61,7 +61,7 @@ function App() {
                       onClick={() => setIsDarkMode(!isDarkMode)}
                       sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}
                     >
-                      {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+                      {isDarkMode ? <DuotoneIcon icon="solar:sun-bold-duotone" size="medium" /> : <DuotoneIcon icon="solar:moon-bold-duotone" size="medium" />}
                     </IconButton>
                     <Routes>
                       <Route path="/" element={<ChatPage />} />

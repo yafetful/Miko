@@ -1,34 +1,18 @@
 // packages/shared/src/types/chat.ts
-import {
-  BotInfo,
-  CreateChatData,
-  EnterMessage,
-  FileObject,
-} from '@coze/api';
+import type { FileObject } from '@coze/api';
 
-export type { BotInfo, CreateChatData, EnterMessage, FileObject };
-
-export interface ChatState {
-  messages: string[];
-  isLoading: boolean;
-  error?: string;
-  conversationId?: string;
-}
-
-export interface ChatConfig {
-  baseUrl: string;
+export type ChatConfig = {
   pat: string;
+  baseUrl: string;
   botId: string;
-}
+};
 
-export interface StreamChatConfig {
+export type StreamChatConfig = {
   query: string;
+  user_id: string;
   conversationId?: string;
-  user_id?: string;
-  meta_data?: {
-    uuid: string;
-  };
-  onUpdate: (delta: string) => void;
-  onSuccess: (delta: string) => void;
-  onCreated: (data: CreateChatData) => void;
-}
+  meta_data?: Record<string, any>;
+  onUpdate: (content: string) => void;
+  onSuccess: (content: string) => void;
+  onCreated: (data: any) => void;
+};

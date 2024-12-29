@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, TextField, IconButton, InputAdornment } from '@mui/material';
 import { useAppAuth } from '../contexts/AuthContext';
 import { CozeService } from 'shared';
@@ -7,8 +7,6 @@ import { authConfig } from '../config/auth';
 import { DuotoneIcon } from './DuotoneIcon';
 import { chatStorage } from '../utils/chatStorage';
 import { ChatHistory } from './ChatHistory';
-import { ViewerContext } from "./vrmViewer/viewerContext";
-import { color } from 'three/src/nodes/TSL.js';
 
 export function ChatDialog() {
   const [message, setMessage] = useState('');
@@ -19,6 +17,8 @@ export function ChatDialog() {
   const walletAddress = publicKey?.toBase58();
   const [conversationId, setConversationId] = useState<string>();
   const lastCreatedConversationId = useRef<string>();  // 用于临时保存新创建的会话ID
+  const [isCollectingMode, setIsCollectingMode] = useState(false);
+  const collectedMessagesRef = useRef<any[]>([]);
 
   // 加载最后的会话ID
   useEffect(() => {
@@ -47,10 +47,9 @@ export function ChatDialog() {
     addMessage,
     updateStreaming,
     clearStreaming,
-    setLoading
+    setLoading,
+    handleStreamMessage
   } = useChat();
-
-  const { viewer } = useContext(ViewerContext);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     // 处理字母键
@@ -96,41 +95,60 @@ export function ChatDialog() {
     try {
       setLoading(true);
       clearStreaming();
+      setIsCollectingMode(false);  // 重置收集模式
+      collectedMessagesRef.current = [];  // 清空收集的消息
 
-      // 立即清除输入框
-      const currentMessage = message;  // 保存当前消息
-      setMessage('');  // 立即清除输入框
+      const currentMessage = message;
+      setMessage('');
 
-      // 添加用户消息到界面
       addMessage({
         role: 'User',
-        content: currentMessage,  // 使用保存的消息
+        content: currentMessage,
       });
 
       await cozeService.streamChat({
-        query: currentMessage,  // 使用保存的消息
+        query: currentMessage,
         user_id: walletAddress,
         conversationId,
         onUpdate: (content) => {
-          updateStreaming(content);
+          // 检查是否是收集指令
+          if (typeof content === 'string' && content.startsWith('[miko]')) {
+            setIsCollectingMode(true);
+            return;
+          }
+
+          // 如果在收集模式，存储消息而不是立即显示
+          if (isCollectingMode) {
+            collectedMessagesRef.current.push(content);
+            return;
+          }
+
+          // 普通流模式：直接更新显示
+          const result = handleStreamMessage(content);
+          if (result?.type !== 'buffering') {
+            updateStreaming(result?.content);
+          }
         },
         onSuccess: (content) => {
-          addMessage({
-            role: 'Assistant',
-            content: content,
-          });
-
-          // 现在可以访问 viewer 了
-          viewer?.model?.playRandomAction();
-
-          // 确保有 conversationId 时保存 AI 响应
-          const currentConversationId = conversationId || lastCreatedConversationId.current;
-          if (currentConversationId) {
-            chatStorage.saveMessage(walletAddress, currentConversationId, {
+          // 如果在收集模式，添加最后一条消息并一次性显示所有内容
+          if (isCollectingMode) {
+            if (!isCompletionMessage(content)) {
+              collectedMessagesRef.current.push(content);
+            }
+            addMessage({
               role: 'Assistant',
-              content: content,
-              timestamp: Date.now()
+              content: collectedMessagesRef.current
             });
+            setIsCollectingMode(false);
+            collectedMessagesRef.current = [];
+          } else {
+            // 普通模式：直接添加消息
+            if (!isCompletionMessage(content)) {
+              addMessage({
+                role: 'Assistant',
+                content: content
+              });
+            }
           }
         },
         onCreated: (data) => {
@@ -138,7 +156,6 @@ export function ChatDialog() {
           setConversationId(newConversationId);
           lastCreatedConversationId.current = newConversationId;
 
-          // 只在这里保存用户消息
           chatStorage.saveMessage(walletAddress, newConversationId, {
             role: 'User',
             content: currentMessage,
@@ -155,6 +172,14 @@ export function ChatDialog() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const isCompletionMessage = (content: any) => {
+    return (
+      content?.type === 'msg' &&
+      content?.category === 'workflow' &&
+      content?.message === 'done'
+    );
   };
 
   const handleClear = () => {

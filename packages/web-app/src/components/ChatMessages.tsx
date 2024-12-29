@@ -3,6 +3,8 @@ import { Box, Paper, Typography, Avatar, keyframes } from '@mui/material';
 import { useChat } from '../contexts/ChatContext';
 import { useAppAuth } from '../contexts/AuthContext';
 import { chatStorage } from '../utils/chatStorage';
+import { ContentParser } from 'shared';
+import { ChatMessage as Message } from 'shared';
 
 // 定义消息向上移动的动画
 const moveUpAnimation = keyframes`
@@ -25,12 +27,6 @@ const enterAnimation = keyframes`
     opacity: 1;
   }
 `;
-
-type Message = {
-  role: 'User' | 'Assistant';
-  content: string;
-  timestamp: number; // 使用 timestamp 作为 ID
-};
 
 type MessageItemProps = {
   message: Message;
@@ -119,13 +115,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         boxShadow: 3,
         display: 'inline-block',
       }}>
-        <Typography sx={{ 
-          whiteSpace: 'pre-wrap', 
-          wordBreak: 'break-word',
-          maxWidth: '100%',
-        }}>
-          {message.content}
-        </Typography>
+        <ContentParser content={message.content} />
       </Paper>
     </Box>
   );
@@ -154,7 +144,8 @@ export function ChatMessages() {
             .slice(-MAX_VISIBLE_MESSAGES)
             .map(msg => ({
               ...msg,
-              timestamp: msg.timestamp || Date.now() // 使用现有的 timestamp 或创建新的
+              id: crypto.randomUUID(),
+              timestamp: msg.timestamp || Date.now()
             }));
           setMessages(historyMessages);
         }

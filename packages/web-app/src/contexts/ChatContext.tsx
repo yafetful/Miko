@@ -1,105 +1,55 @@
-import { createContext, useContext, useReducer, ReactNode } from 'react';
-import { ChatEventType, ChatStatus, RoleType } from '@coze/api';
-
-interface Message {
-  id: string;
-  role: 'User' | 'Assistant';
-  content: string;
-  type?: string;
-  timestamp: number;
-}
+import { createContext, useContext, ReactNode } from 'react';
+import { useChat as useSharedChat } from 'shared';
+import { ChatMessage } from 'shared';
 
 interface ChatState {
-  messages: Message[];
+  messages: ChatMessage[];
   loading: boolean;
   error: string | null;
-  streamingContent: string;
-}
-
-type ChatAction = 
-  | { type: 'ADD_MESSAGE'; payload: Omit<Message, 'id' | 'timestamp'> }
-  | { type: 'UPDATE_STREAMING'; payload: string }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'CLEAR_STREAMING' };
-
-function chatReducer(state: ChatState, action: ChatAction): ChatState {
-  switch (action.type) {
-    case 'ADD_MESSAGE':
-      return {
-        ...state,
-        messages: [...state.messages, {
-          ...action.payload,
-          id: crypto.randomUUID(),
-          timestamp: Date.now(),
-        }],
-        streamingContent: '',
-      };
-    case 'UPDATE_STREAMING':
-      return {
-        ...state,
-        streamingContent: state.streamingContent + action.payload,
-      };
-    case 'CLEAR_STREAMING':
-      return {
-        ...state,
-        streamingContent: '',
-      };
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_ERROR':
-      return { ...state, error: action.payload };
-    default:
-      return state;
-  }
+  streaming: string;
 }
 
 const ChatContext = createContext<{
   state: ChatState;
-  addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   updateStreaming: (content: string) => void;
   clearStreaming: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  handleStreamMessage: (content: string) => any;
 } | null>(null);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(chatReducer, {
-    messages: [],
-    loading: false,
-    error: null,
-    streamingContent: '',
-  });
+  const {
+    messages,
+    streaming,
+    loading,
+    error,
+    addMessage,
+    updateStreaming,
+    clearStreaming,
+    setLoading,
+    setError,
+    handleStreamMessage,
+  } = useSharedChat();
 
-  const addMessage = (message: Omit<Message, 'id' | 'timestamp'>) => {
-    dispatch({ type: 'ADD_MESSAGE', payload: message });
-  };
-
-  const updateStreaming = (content: string) => {
-    dispatch({ type: 'UPDATE_STREAMING', payload: content });
-  };
-
-  const clearStreaming = () => {
-    dispatch({ type: 'CLEAR_STREAMING' });
-  };
-
-  const setLoading = (loading: boolean) => {
-    dispatch({ type: 'SET_LOADING', payload: loading });
-  };
-
-  const setError = (error: string | null) => {
-    dispatch({ type: 'SET_ERROR', payload: error });
+  const value = {
+    state: {
+      messages,
+      streaming,
+      loading,
+      error
+    },
+    addMessage,
+    updateStreaming,
+    clearStreaming,
+    setLoading,
+    setError,
+    handleStreamMessage,
   };
 
   return (
-    <ChatContext.Provider value={{ 
-      state, 
-      addMessage, 
-      updateStreaming,
-      clearStreaming,
-      setLoading, 
-      setError 
-    }}>
+    <ChatContext.Provider value={value}>
       {children}
     </ChatContext.Provider>
   );
