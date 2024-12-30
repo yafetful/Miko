@@ -25,6 +25,7 @@ export interface MessageResult {
   type: 'json' | 'text';
   content: string;
   isComplete: boolean;
+  isCommand?: boolean;
 }
 
 export interface StreamChatConfig {
