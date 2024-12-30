@@ -1,40 +1,29 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState } from 'react';
 import { Box, TextField, IconButton, InputAdornment } from '@mui/material';
 import { useAppAuth } from '../contexts/AuthContext';
 import { CozeService } from 'shared';
 import { useChat } from '../contexts/ChatContext';
 import { authConfig } from '../config/auth';
 import { DuotoneIcon } from './DuotoneIcon';
-import { chatStorage } from '../utils/chatStorage';
 import { ChatHistory } from './ChatHistory';
-import { ViewerContext } from "./vrmViewer/viewerContext";
-import { CommandService } from 'shared';
+import { useCommandHandler } from '../hooks/useCommandHandler';
+import { useInputHandler } from '../hooks/useInputHandler';
+import { useChatHistory } from '../hooks/useChatHistory';
 
 export function ChatDialog() {
   const [message, setMessage] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const { isAuthenticated, publicKey } = useAppAuth();
-  
-  // 获取钱包地址字符串
   const walletAddress = publicKey?.toBase58();
-  const [conversationId, setConversationId] = useState<string>();
-  const lastCreatedConversationId = useRef<string>();  // 用于临时保存新创建的会话ID
-
-  // 加载最后的会话ID
-  useEffect(() => {
-    if (walletAddress) {
-      const history = chatStorage.getHistory(walletAddress);
-      if (history) {
-        // 获取最后更新的会话ID
-        const sortedConversations = Object.values(history.conversations)
-          .sort((a, b) => b.lastUpdated - a.lastUpdated);
-        
-        if (sortedConversations.length > 0) {
-          setConversationId(sortedConversations[0].id);
-        }
-      }
-    }
-  }, [walletAddress]);
+  
+  const { commandService, executeCommand } = useCommandHandler();
+  const { handleKeyDown } = useInputHandler();
+  const { 
+    conversationId, 
+    setConversationId, 
+    lastCreatedConversationId,
+    saveMessage 
+  } = useChatHistory(walletAddress);
 
   const [cozeService] = useState(() => new CozeService({
     pat: authConfig.patToken,
@@ -50,61 +39,6 @@ export function ChatDialog() {
     setLoading
   } = useChat();
 
-  const { viewer } = useContext(ViewerContext);
-
-  // 初始化命令服务
-  const [commandService] = useState(() => new CommandService());
-  
-  // 在组件初始化时注册命令
-  useEffect(() => {
-    // 注册 info 命令
-    commandService.register('analyze', {
-      execute: async (params) => {
-        // 处理 info 命令的逻辑
-        console.log('执行 analyze 命令');
-      }
-    });
-    
-    // 可以注册更多命令...
-  }, [commandService]);
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    // 处理字母键
-    if (event.code.startsWith('Key')) {
-      const char = event.code.slice(3).toLowerCase();
-      const customEvent = new CustomEvent('character-input', {
-        detail: { char }
-      });
-      window.dispatchEvent(customEvent);
-    }
-    // 处理回车键
-    else if (event.code === 'Enter') {
-      const customEvent = new CustomEvent('character-input', {
-        detail: { char: 'enter' }
-      });
-      window.dispatchEvent(customEvent);
-    }
-    // 处理标点符号
-    else {
-      const codeMap: Record<string, string> = {
-        'Period': '.',
-        'Slash': '?',
-        'Space': ' ',
-        'Digit1': '!',  // 添加叹号映射
-      };
-
-      const char = codeMap[event.code] || event.key;
-
-      if ([' ', '?', '!', '.'].includes(char)) {
-        const customEvent = new CustomEvent('character-input', {
-          detail: { char }
-        });
-        window.dispatchEvent(customEvent);
-      }
-    }
-  };
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !walletAddress) return;
@@ -113,66 +47,35 @@ export function ChatDialog() {
       setLoading(true);
       clearStreaming();
 
-      // 立即清除输入框
-      const currentMessage = message;  // 保存当前消息
-      setMessage('');  // 立即清除输入框
-
-      // 添加用户消息到界面
-      addMessage({
-        role: 'User',
-        content: currentMessage,  // 使用保存的消息
-      });
+      const currentMessage = message;
+      setMessage('');
+      addMessage({ role: 'User', content: currentMessage });
+      saveMessage(currentMessage, 'User');
 
       await cozeService.streamChat({
-        query: currentMessage,  // 使用保存的消息
+        query: currentMessage,
         user_id: walletAddress,
         conversationId,
         onUpdate: (result) => {
-          if(result.type === 'json' || result.isCommand){
-            return;
+          if(result.type === 'text' && !result.isCommand) {
+            updateStreaming(result.content);
           }
-          updateStreaming(result.content);
         },
         onSuccess: (result) => {
           if (result.isCommand) {
-            try {
-              // 直接传入命令内容，让 CommandService 来解析和执行
-              commandService.execute(result.content);
-            } catch (error) {
-              console.error('命令执行失败:', error);
-            }
+            executeCommand(result.content);
           } else {
-            // 不是命令，添加到消息列表
             addMessage({
               role: 'Assistant',
               content: result.content,
             });
-          }
-
-          // 现在可以访问 viewer 了
-          viewer?.model?.playRandomAction();
-
-          // 确保有 conversationId 时保存 AI 响应
-          const currentConversationId = conversationId || lastCreatedConversationId.current;
-          if (currentConversationId) {
-            chatStorage.saveMessage(walletAddress, currentConversationId, {
-              role: 'Assistant',
-              content: result.content,
-              timestamp: Date.now()
-            });
+            saveMessage(result.content, 'Assistant');
           }
         },
         onCreated: (data) => {
           const newConversationId = data.conversation_id;
           setConversationId(newConversationId);
           lastCreatedConversationId.current = newConversationId;
-
-          // 只在这里保存用户消息
-          chatStorage.saveMessage(walletAddress, newConversationId, {
-            role: 'User',
-            content: currentMessage,
-            timestamp: Date.now()
-          });
         },
       });
     } catch (error) {
@@ -184,10 +87,6 @@ export function ChatDialog() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleClear = () => {
-    setMessage('');
   };
 
   return (
@@ -238,7 +137,7 @@ export function ChatDialog() {
             endAdornment: (
               <InputAdornment position="end" sx={{ display: 'flex', gap: 1 }}>
                 {message && (
-                  <IconButton onClick={handleClear} size="small" color='default'>
+                  <IconButton onClick={() => setMessage('')} size="small" color='default'>
                     <DuotoneIcon icon="solar:close-circle-bold-duotone" size="small" />
                   </IconButton>
                 )}

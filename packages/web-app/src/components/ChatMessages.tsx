@@ -2,14 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
 import { useChat } from '../contexts/ChatContext';
 import { useAppAuth } from '../contexts/AuthContext';
-import { chatStorage } from '../utils/chatStorage';
 import { MessageItem, Message } from './MessageItem';
+import { useChatHistory } from '../hooks/useChatHistory';
 
 const MAX_VISIBLE_MESSAGES = 2;
 
 export function ChatMessages() {
   const { state } = useChat();
   const { publicKey } = useAppAuth();
+  const walletAddress = publicKey?.toBase58();
+  const { loadHistoryMessages } = useChatHistory(walletAddress);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isMovingUp, setIsMovingUp] = useState(false);
@@ -19,29 +22,13 @@ export function ChatMessages() {
 
   // 加载历史记录
   useEffect(() => {
-    const loadHistory = async () => {
-      const walletAddress = publicKey?.toBase58();
-      if (!walletAddress || state.messages.length > 0) return;
-
-      const history = chatStorage.getHistory(walletAddress);
-      if (!history) return;
-
-      const lastConversation = Object.values(history.conversations)
-        .sort((a, b) => b.lastUpdated - a.lastUpdated)[0];
-
-      if (lastConversation) {
-        const historyMessages = lastConversation.messages
-          .slice(-MAX_VISIBLE_MESSAGES)
-          .map(msg => ({
-            ...msg,
-            timestamp: msg.timestamp || Date.now()
-          }));
-        setMessages(historyMessages);
-      }
-    };
-
-    loadHistory();
-  }, [publicKey]);
+    if (!walletAddress || state.messages.length > 0) return;
+    
+    const historyMessages = loadHistoryMessages(MAX_VISIBLE_MESSAGES);
+    if (historyMessages.length > 0) {
+      setMessages(historyMessages);
+    }
+  }, [walletAddress, state.messages.length]);
 
   // 处理流式内容
   useEffect(() => {
