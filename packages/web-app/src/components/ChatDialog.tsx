@@ -9,14 +9,19 @@ import { ChatHistory } from './ChatHistory';
 import { useCommandHandler } from '../hooks/useCommandHandler';
 import { useInputHandler } from '../hooks/useInputHandler';
 import { useChatHistory } from '../hooks/useChatHistory';
+import { useJsonCollector } from '../contexts/JsonCollectorContext';
 
 export function ChatDialog() {
+  // State for managing input message and history dialog
   const [message, setMessage] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Get authentication state and wallet address
   const { isAuthenticated, publicKey } = useAppAuth();
   const walletAddress = publicKey?.toBase58();
   
-  const { commandService, executeCommand } = useCommandHandler();
+  // Custom hooks for handling commands, input events, and chat history
+  const { executeCommand } = useCommandHandler();
   const { handleKeyDown } = useInputHandler();
   const { 
     conversationId, 
@@ -25,12 +30,14 @@ export function ChatDialog() {
     saveMessage 
   } = useChatHistory(walletAddress);
 
+  // Initialize Coze service for AI chat
   const [cozeService] = useState(() => new CozeService({
     pat: authConfig.patToken,
     baseUrl: authConfig.baseUrl,
     botId: authConfig.botId,
   }));
 
+  // Get chat context states and methods
   const {
     state: { loading },
     addMessage,
@@ -39,6 +46,9 @@ export function ChatDialog() {
     setLoading
   } = useChat();
 
+  const { addJson } = useJsonCollector();
+
+  // Handle form submission and chat interaction
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !walletAddress) return;
@@ -47,24 +57,32 @@ export function ChatDialog() {
       setLoading(true);
       clearStreaming();
 
+      // Save and clear current message
       const currentMessage = message;
       setMessage('');
       addMessage({ role: 'User', content: currentMessage });
       saveMessage(currentMessage, 'User');
 
+      // Start chat stream with AI
       await cozeService.streamChat({
         query: currentMessage,
         user_id: walletAddress,
         conversationId,
+        // Handle streaming updates for real-time response
         onUpdate: (result) => {
           if(result.type === 'text' && !result.isCommand) {
             updateStreaming(result.content);
-          }
+          } 
         },
+        // Process final response
         onSuccess: (result) => {
           if (result.isCommand) {
+            // Execute command if response is a command
             executeCommand(result.content);
+          }else if(result.type === 'json'){
+            addJson(result.content);
           } else {
+            // Add normal message to chat
             addMessage({
               role: 'Assistant',
               content: result.content,
@@ -72,6 +90,7 @@ export function ChatDialog() {
             saveMessage(result.content, 'Assistant');
           }
         },
+        // Handle new conversation creation
         onCreated: (data) => {
           const newConversationId = data.conversation_id;
           setConversationId(newConversationId);
@@ -89,6 +108,7 @@ export function ChatDialog() {
     }
   };
 
+  // Render chat interface
   return (
     <Box
       component="form"
@@ -103,12 +123,13 @@ export function ChatDialog() {
         flex: 1, 
         display: 'flex', 
         gap: 1,
-        alignItems: 'center'  // 确保子元素垂直居中
+        alignItems: 'center'
       }}>
+        {/* History button */}
         <Box sx={{ 
-          width: 40,     // 固定宽度
-          height: 40,    // 固定高度
-          flexShrink: 0, // 防止压缩
+          width: 40,
+          height: 40,
+          flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
@@ -121,6 +142,7 @@ export function ChatDialog() {
           </IconButton>
         </Box>
 
+        {/* Chat input field */}
         <TextField
           fullWidth
           autoComplete='off'
@@ -136,11 +158,13 @@ export function ChatDialog() {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end" sx={{ display: 'flex', gap: 1 }}>
+                {/* Clear input button */}
                 {message && (
                   <IconButton onClick={() => setMessage('')} size="small" color='default'>
                     <DuotoneIcon icon="solar:close-circle-bold-duotone" size="small" />
                   </IconButton>
                 )}
+                {/* Submit button */}
                 <IconButton
                   type="submit"
                   disabled={!isAuthenticated || !message.trim() || loading}
@@ -154,6 +178,7 @@ export function ChatDialog() {
           }}
         />
 
+        {/* Chat history dialog */}
         <ChatHistory 
           open={historyOpen}
           onClose={() => setHistoryOpen(false)}

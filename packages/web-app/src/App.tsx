@@ -13,6 +13,7 @@ import { ChatProvider } from './contexts/ChatContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Global } from '@emotion/react';
 import { globalStyles } from './theme/globalStyles';
+import { JsonCollectorProvider } from './contexts/JsonCollectorContext';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -56,17 +57,19 @@ function App() {
             <WalletModalProvider>
               <AuthProvider>
                 <ChatProvider>
-                  <Router>
-                    <IconButton
-                      onClick={() => setIsDarkMode(!isDarkMode)}
-                      sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}
-                    >
-                      {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-                    </IconButton>
-                    <Routes>
-                      <Route path="/" element={<ChatPage />} />
-                    </Routes>
-                  </Router>
+                  <JsonCollectorProvider>
+                    <Router>
+                      <IconButton
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}
+                      >
+                        {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+                      </IconButton>
+                      <Routes>
+                        <Route path="/" element={<ChatPage />} />
+                      </Routes>
+                    </Router>
+                  </JsonCollectorProvider>
                 </ChatProvider>
               </AuthProvider>
             </WalletModalProvider>

@@ -4,6 +4,7 @@ import { useChat } from '../contexts/ChatContext';
 import { useAppAuth } from '../contexts/AuthContext';
 import { MessageItem, Message } from './MessageItem';
 import { useChatHistory } from '../hooks/useChatHistory';
+import { useJsonCollector } from '../contexts/JsonCollectorContext';
 
 const MAX_VISIBLE_MESSAGES = 2;
 
@@ -12,6 +13,7 @@ export function ChatMessages() {
   const { publicKey } = useAppAuth();
   const walletAddress = publicKey?.toBase58();
   const { loadHistoryMessages } = useChatHistory(walletAddress);
+  const { onJsonUpdate } = useJsonCollector();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -117,6 +119,16 @@ export function ChatMessages() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    // 订阅 JSON 数据更新
+    const unsubscribe = onJsonUpdate((jsonData) => {
+      console.log('JSON data updated:', jsonData);
+    });
+    
+    // 清理订阅
+    return () => unsubscribe();
+  }, []);
 
   if (messages.length === 0) return null;
 
