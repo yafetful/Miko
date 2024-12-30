@@ -5,6 +5,7 @@ export * from './types/chat';
 export * from './types/auth';
 export * from './hooks/useAuth';
 export * from './hooks/useCozeClient';
+export * from './types/commands';
 
 export const sayHello = () => {
   return "Hello from shared package!";
@@ -13,3 +14,5 @@ export const sayHello = () => {
 export const testAI = async () => {
   return "AI response simulation";
 };
+
+export * from './services/command-service';

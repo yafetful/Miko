@@ -36,6 +36,6 @@ export interface StreamChatConfig {
     uuid: string;
   };
   onUpdate: (result: MessageResult) => void;
-  onSuccess: (delta: string) => void;
+  onSuccess: (result: MessageResult) => void;
   onCreated: (data: CreateChatData) => void;
 }

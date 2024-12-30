@@ -1,10 +1,15 @@
-export interface MikoCommand {
-  name: string;          // 命令名称
-  pattern: RegExp;       // 匹配模式
-  execute: (params?: string) => void | Promise<void>;  // 执行函数
-  description?: string;  // 命令描述
+export interface Command {
+  type: string;
+  params?: Record<string, any>;
 }
 
-export type CommandRegistry = {
-  [key: string]: MikoCommand;
-}; 
+export interface CommandHandler {
+  execute: (params?: Record<string, any>) => void | Promise<void>;
+}
+
+export interface CommandRegistry {
+  [key: string]: CommandHandler;
+}
+
+// 添加命令格式常量
+export const COMMAND_PREFIX = 'mikoCmd'; 

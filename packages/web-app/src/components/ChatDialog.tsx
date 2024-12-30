@@ -8,7 +8,7 @@ import { DuotoneIcon } from './DuotoneIcon';
 import { chatStorage } from '../utils/chatStorage';
 import { ChatHistory } from './ChatHistory';
 import { ViewerContext } from "./vrmViewer/viewerContext";
-import { color } from 'three/src/nodes/TSL.js';
+import { CommandService } from 'shared';
 
 export function ChatDialog() {
   const [message, setMessage] = useState('');
@@ -51,6 +51,22 @@ export function ChatDialog() {
   } = useChat();
 
   const { viewer } = useContext(ViewerContext);
+
+  // 初始化命令服务
+  const [commandService] = useState(() => new CommandService());
+  
+  // 在组件初始化时注册命令
+  useEffect(() => {
+    // 注册 info 命令
+    commandService.register('analyze', {
+      execute: async (params) => {
+        // 处理 info 命令的逻辑
+        console.log('执行 analyze 命令');
+      }
+    });
+    
+    // 可以注册更多命令...
+  }, [commandService]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     // 处理字母键
@@ -112,17 +128,26 @@ export function ChatDialog() {
         user_id: walletAddress,
         conversationId,
         onUpdate: (result) => {
-          if (result.type === 'json') {
-            console.log('waiting for json');
-          } else {
-            updateStreaming(result.content);
+          if(result.type === 'json' || result.isCommand){
+            return;
           }
+          updateStreaming(result.content);
         },
-        onSuccess: (content) => {
-          addMessage({
-            role: 'Assistant',
-            content: content,
-          });
+        onSuccess: (result) => {
+          if (result.isCommand) {
+            try {
+              // 直接传入命令内容，让 CommandService 来解析和执行
+              commandService.execute(result.content);
+            } catch (error) {
+              console.error('命令执行失败:', error);
+            }
+          } else {
+            // 不是命令，添加到消息列表
+            addMessage({
+              role: 'Assistant',
+              content: result.content,
+            });
+          }
 
           // 现在可以访问 viewer 了
           viewer?.model?.playRandomAction();
@@ -132,7 +157,7 @@ export function ChatDialog() {
           if (currentConversationId) {
             chatStorage.saveMessage(walletAddress, currentConversationId, {
               role: 'Assistant',
-              content: content,
+              content: result.content,
               timestamp: Date.now()
             });
           }

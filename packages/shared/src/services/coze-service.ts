@@ -78,10 +78,11 @@ export class CozeService {
             onUpdate(result);
             break;
           case ChatEventType.CONVERSATION_MESSAGE_COMPLETED:
+            this.messageHandler.reset();
             const { role, type, content: msgContent, content_type } = part.data;
-            console.log('content_type', content_type);
             if (role === 'assistant' && type === 'answer') {
-              onSuccess(msgContent);
+              const finalResult = this.messageHandler.processMessage(msgContent);
+              onSuccess(finalResult);
               this.messageHandler.reset();
             }
             break;
