@@ -111,8 +111,12 @@ export function ChatDialog() {
         query: currentMessage,  // 使用保存的消息
         user_id: walletAddress,
         conversationId,
-        onUpdate: (content) => {
-          updateStreaming(content);
+        onUpdate: (result) => {
+          if (result.type === 'json') {
+            console.log('waiting for json');
+          } else {
+            updateStreaming(result.content);
+          }
         },
         onSuccess: (content) => {
           addMessage({

@@ -27,6 +27,7 @@ export interface Message {
   role: 'User' | 'Assistant';
   content: string;
   timestamp: number;
+  id?: string;
 }
 
 interface MessageItemProps {

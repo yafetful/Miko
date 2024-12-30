@@ -21,6 +21,12 @@ export interface ChatConfig {
   botId: string;
 }
 
+export interface MessageResult {
+  type: 'json' | 'text';
+  content: string;
+  isComplete: boolean;
+}
+
 export interface StreamChatConfig {
   query: string;
   conversationId?: string;
@@ -28,7 +34,7 @@ export interface StreamChatConfig {
   meta_data?: {
     uuid: string;
   };
-  onUpdate: (delta: string) => void;
+  onUpdate: (result: MessageResult) => void;
   onSuccess: (delta: string) => void;
   onCreated: (data: CreateChatData) => void;
 }

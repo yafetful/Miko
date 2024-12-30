@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
 import { useChat } from '../contexts/ChatContext';
 import { useAppAuth } from '../contexts/AuthContext';
@@ -15,6 +15,7 @@ export function ChatMessages() {
   const [isMovingUp, setIsMovingUp] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   const streamingMessageRef = useRef<Message | null>(null);
+  const streamingTimestampRef = useRef<number>(0);
 
   // 加载历史记录
   useEffect(() => {
@@ -48,20 +49,24 @@ export function ChatMessages() {
 
     const handleStreamingContent = () => {
       if (!streamingMessageRef.current) {
+        if (!streamingTimestampRef.current) {
+          streamingTimestampRef.current = Date.now();
+        }
+        
         const newMessage: Message = {
           role: 'Assistant',
           content: state.streamingContent,
-          timestamp: Date.now()
+          timestamp: streamingTimestampRef.current
         };
         streamingMessageRef.current = newMessage;
-        setMessages(prev => [...prev, newMessage]);
+        setMessages(prev => [...prev, newMessage].slice(-MAX_VISIBLE_MESSAGES));
       } else {
         const updatedMessage: Message = {
           ...streamingMessageRef.current,
           content: state.streamingContent
         };
         streamingMessageRef.current = updatedMessage;
-        setMessages(prev => [...prev.slice(0, -1), updatedMessage]);
+        setMessages(prev => [...prev.slice(0, -1), updatedMessage].slice(-MAX_VISIBLE_MESSAGES));
       }
     };
 
@@ -110,9 +115,11 @@ export function ChatMessages() {
     if (streamingMessageRef.current) {
       const newMessage = {
         ...message,
-        timestamp: streamingMessageRef.current.timestamp
+        timestamp: streamingTimestampRef.current
       };
       setMessages(prev => [...prev.slice(0, -1), newMessage].slice(-MAX_VISIBLE_MESSAGES));
+      streamingMessageRef.current = null;
+      streamingTimestampRef.current = 0;
     } else {
       const newMessage = { ...message, timestamp: Date.now() };
       setMessages(prev => [...prev, newMessage].slice(-MAX_VISIBLE_MESSAGES));
@@ -139,7 +146,7 @@ export function ChatMessages() {
     }}>
       {messages.map((message, index) => (
         <MessageItem
-          key={message.timestamp}
+          key={`${message.role}-${message.timestamp}`}
           message={message}
           isMovingUp={isMovingUp && index < messages.length - 1}
           isEntering={isEntering && index === messages.length - 1}

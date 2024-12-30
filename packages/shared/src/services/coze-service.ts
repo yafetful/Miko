@@ -1,10 +1,12 @@
 import { CozeAPI, ChatEventType, RoleType, type EnterMessage, type FileObject, type CreateChatData } from '@coze/api';
 import type { ChatConfig, StreamChatConfig } from '../types/chat';
+import { MessageHandler } from '../components/message-handler';
 
 export class CozeService {
   private client: CozeAPI;
   private botId: string;
   private fileInfo?: FileObject;
+  private messageHandler: MessageHandler;
 
   constructor(config: ChatConfig) {
     this.client = new CozeAPI({
@@ -13,6 +15,7 @@ export class CozeService {
       allowPersonalAccessTokenInBrowser: true,
     });
     this.botId = config.botId;
+    this.messageHandler = new MessageHandler();
   }
 
   private createMessage(query: string, fileInfo?: FileObject): EnterMessage[] {
@@ -43,14 +46,14 @@ export class CozeService {
     const { query, conversationId, user_id, meta_data, onUpdate, onSuccess, onCreated } = config;
     const messages = this.createMessage(query, this.fileInfo);
     
-    console.log('Sending chat request:', {
-      bot_id: this.botId,
-      user_id,
-      messages,
-      conversation_id: conversationId,
-      meta_data,
-      auto_save_history: true
-    });
+    // console.log('Sending chat request:', {
+    //   bot_id: this.botId,
+    //   user_id,
+    //   messages,
+    //   conversation_id: conversationId,
+    //   meta_data,
+    //   auto_save_history: true
+    // });
     
     try {
       const stream = await this.client.chat.stream({
@@ -62,7 +65,6 @@ export class CozeService {
         meta_data,
       });
       
-      let msg = '';
 
       for await (const part of stream) {
         switch (part.event) {
@@ -71,19 +73,16 @@ export class CozeService {
             onCreated(part.data);
             break;
           case ChatEventType.CONVERSATION_MESSAGE_DELTA:
-            msg += part.data.content;
-            onUpdate(msg);
+            // msg += part.data.content;
+            const result = this.messageHandler.processMessage(part.data.content);
+            onUpdate(result);
             break;
           case ChatEventType.CONVERSATION_MESSAGE_COMPLETED:
             const { role, type, content: msgContent, content_type } = part.data;
             console.log('content_type', content_type);
             if (role === 'assistant' && type === 'answer') {
-              if (content_type === 'card') {
-                // 如果是card类型,显示原始JSON
-                msg = JSON.stringify(msgContent, null, 2);
-              }
-              msg += '\n';
-              onSuccess(msg);
+              onSuccess(msgContent);
+              this.messageHandler.reset();
             }
             break;
           case ChatEventType.CONVERSATION_CHAT_COMPLETED:
