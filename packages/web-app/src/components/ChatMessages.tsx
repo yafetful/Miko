@@ -1,201 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Avatar, keyframes } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box } from '@mui/material';
 import { useChat } from '../contexts/ChatContext';
 import { useAppAuth } from '../contexts/AuthContext';
 import { chatStorage } from '../utils/chatStorage';
+import { MessageItem, Message } from './MessageItem';
 
-// 定义消息向上移动的动画
-const moveUpAnimation = keyframes`
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-40px); // 向上移动的距离
-  }
-`;
-
-// 定义新消息进入的动画
-const enterAnimation = keyframes`
-  from {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-`;
-
-type Message = {
-  role: 'User' | 'Assistant';
-  content: string;
-  timestamp: number; // 使用 timestamp 作为 ID
-};
-
-type MessageItemProps = {
-  message: Message;
-  isMovingUp: boolean;
-  isEntering: boolean;
-  publicKey?: any;
-};
-
-const MessageItem: React.FC<MessageItemProps> = ({ 
-  message, 
-  isMovingUp,
-  isEntering,
-  publicKey,
-}) => {
-  const isUser = message.role === 'User';
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: isUser ? 'flex-end' : 'flex-start',
-        px: {
-          xs: '0px',
-          sm: isUser ? '0px' : '50px'
-        },
-        width: {
-          xs: '100%',  // 小屏幕时宽度100%
-          sm: '80%'    // 大屏幕时宽度80%
-        },
-        alignSelf: isUser ? 'flex-end' : 'flex-start',
-        willChange: 'transform',
-        animation: isMovingUp 
-          ? `${moveUpAnimation} 0.3s linear forwards`
-          : isEntering
-            ? `${enterAnimation} 0.3s linear`
-            : 'none',
-      }}
-    >
-      <Box sx={{ 
-        [isUser ? 'mr' : 'ml']: 2, 
-        py: 1,
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 1,
-      }}>
-        {isUser ? (
-          <>
-            <Typography variant="h6">You</Typography>
-            <Avatar sx={{
-              width: 48,
-              height: 48,
-              bgcolor: 'primary.main',
-              boxShadow: 3,
-              borderRadius: '8px',
-            }}>
-              U
-            </Avatar>
-          </>
-        ) : (
-          <>
-            <Avatar
-              src="/assets/Miko.png"
-              alt="Miko"
-              variant="square"
-              sx={{
-                width: 48,
-                height: 48,
-                boxShadow: 3,
-                borderRadius: '8px',
-              }}
-            />
-            <Typography variant="h6">Miko</Typography>
-          </>
-        )}
-      </Box>
-
-      <Paper sx={{
-        p: 2,
-        width: 'auto',
-        maxWidth: '100%',
-        borderRadius: 2,
-        border: 2,
-        borderColor: isUser ? 'primary.main' : 'secondary.main',
-        backgroundColor: 'background.paper',
-        boxShadow: 3,
-        display: 'inline-block',
-      }}>
-        <Typography sx={{ 
-          whiteSpace: 'pre-wrap', 
-          wordBreak: 'break-word',
-          maxWidth: '100%',
-        }}>
-          {message.content}
-        </Typography>
-      </Paper>
-    </Box>
-  );
-};
+const MAX_VISIBLE_MESSAGES = 2;
 
 export function ChatMessages() {
-  const MAX_VISIBLE_MESSAGES = 2; // 可配置的最大显示消息数
   const { state } = useChat();
   const { publicKey } = useAppAuth();
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isMovingUp, setIsMovingUp] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
+  const streamingMessageRef = useRef<Message | null>(null);
 
   // 加载历史记录
   useEffect(() => {
-    const walletAddress = publicKey?.toBase58();
-    if (walletAddress && state.messages.length === 0) {
-      const history = chatStorage.getHistory(walletAddress);
-      if (history) {
-        const lastConversation = Object.values(history.conversations)
-          .sort((a, b) => b.lastUpdated - a.lastUpdated)[0];
+    const loadHistory = async () => {
+      const walletAddress = publicKey?.toBase58();
+      if (!walletAddress || state.messages.length > 0) return;
 
-        if (lastConversation) {
-          const historyMessages = lastConversation.messages
-            .slice(-MAX_VISIBLE_MESSAGES)
-            .map(msg => ({
-              ...msg,
-              timestamp: msg.timestamp || Date.now() // 使用现有的 timestamp 或创建新的
-            }));
-          setMessages(historyMessages);
-        }
+      const history = chatStorage.getHistory(walletAddress);
+      if (!history) return;
+
+      const lastConversation = Object.values(history.conversations)
+        .sort((a, b) => b.lastUpdated - a.lastUpdated)[0];
+
+      if (lastConversation) {
+        const historyMessages = lastConversation.messages
+          .slice(-MAX_VISIBLE_MESSAGES)
+          .map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp || Date.now()
+          }));
+        setMessages(historyMessages);
       }
-    }
+    };
+
+    loadHistory();
   }, [publicKey]);
 
-  // 监听新消息
+  // 处理流式内容
   useEffect(() => {
-    if (state.messages.length > 0) {
-      const latestMessage = state.messages[state.messages.length - 1];
-      const newMessage = {
-        ...latestMessage,
-        timestamp: Date.now() // 使用当前时间戳
-      };
+    if (!state.streamingContent) return;
 
-      if (messages.length > 0) {
-        setIsMovingUp(true);
-        setTimeout(() => {
-          setMessages(prev => {
-            const newMessages = [...prev, newMessage].slice(-MAX_VISIBLE_MESSAGES);
-            setIsMovingUp(false);
-            setIsEntering(true);
-            return newMessages;
-          });
-        }, 300);
+    const handleStreamingContent = () => {
+      if (!streamingMessageRef.current) {
+        const newMessage: Message = {
+          role: 'Assistant',
+          content: state.streamingContent,
+          timestamp: Date.now()
+        };
+        streamingMessageRef.current = newMessage;
+        setMessages(prev => [...prev, newMessage]);
       } else {
-        setMessages([newMessage]);
-        setIsEntering(true);
+        const updatedMessage: Message = {
+          ...streamingMessageRef.current,
+          content: state.streamingContent
+        };
+        streamingMessageRef.current = updatedMessage;
+        setMessages(prev => [...prev.slice(0, -1), updatedMessage]);
       }
-    }
+    };
+
+    handleStreamingContent();
+  }, [state.streamingContent]);
+
+  // 处理新消息
+  useEffect(() => {
+    if (state.messages.length === 0) return;
+
+    const handleNewMessage = () => {
+      const latestMessage = state.messages[state.messages.length - 1];
+      
+      if (latestMessage.role === 'User') {
+        handleUserMessage(latestMessage);
+      } else {
+        handleAssistantMessage(latestMessage);
+      }
+    };
+
+    handleNewMessage();
   }, [state.messages.length]);
 
-  // 自动滚动到底部
+  // 处理用户消息
+  const handleUserMessage = (message: Message) => {
+    const newMessage = { ...message, timestamp: Date.now() };
+
+    if (messages.length > 0) {
+      setIsMovingUp(true);
+      setTimeout(() => {
+        setMessages(prev => {
+          const newMessages = [...prev, newMessage].slice(-MAX_VISIBLE_MESSAGES);
+          setIsMovingUp(false);
+          setIsEntering(true);
+          return newMessages;
+        });
+      }, 300);
+    } else {
+      setMessages([newMessage]);
+      setIsEntering(true);
+    }
+  };
+
+  // 处理助手消息
+  const handleAssistantMessage = (message: Message) => {
+    if (streamingMessageRef.current) {
+      const newMessage = {
+        ...message,
+        timestamp: streamingMessageRef.current.timestamp
+      };
+      setMessages(prev => [...prev.slice(0, -1), newMessage].slice(-MAX_VISIBLE_MESSAGES));
+    } else {
+      const newMessage = { ...message, timestamp: Date.now() };
+      setMessages(prev => [...prev, newMessage].slice(-MAX_VISIBLE_MESSAGES));
+    }
+  };
+
+  // 自动滚动
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  if (messages.length === 0) {
-    return null;
-  }
+  if (messages.length === 0) return null;
 
   return (
     <Box sx={{ 

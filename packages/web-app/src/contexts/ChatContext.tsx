@@ -38,7 +38,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'UPDATE_STREAMING':
       return {
         ...state,
-        streamingContent: state.streamingContent + action.payload,
+        streamingContent: action.payload,
       };
     case 'CLEAR_STREAMING':
       return {
