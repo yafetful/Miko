@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Box, TextField, IconButton, InputAdornment } from '@mui/material';
 import { useAppAuth } from '../contexts/AuthContext';
 import { CozeService } from 'shared';
@@ -10,7 +10,7 @@ import { useCommandHandler } from '../hooks/useCommandHandler';
 import { useInputHandler } from '../hooks/useInputHandler';
 import { useChatHistory } from '../hooks/useChatHistory';
 import { useJsonCollector } from '../contexts/JsonCollectorContext';
-
+import { ViewerContext } from './vrmViewer/viewerContext';
 export function ChatDialog() {
   // State for managing input message and history dialog
   const [message, setMessage] = useState('');
@@ -47,6 +47,7 @@ export function ChatDialog() {
   } = useChat();
 
   const { addJson } = useJsonCollector();
+  const { viewer } = useContext(ViewerContext);
 
   // Handle form submission and chat interaction
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,6 +90,7 @@ export function ChatDialog() {
             });
             saveMessage(result.content, 'Assistant');
           }
+          viewer?.model?.playRandomAction();
         },
         // Handle new conversation creation
         onCreated: (data) => {

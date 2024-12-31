@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useRef, useState } from 'react';
+import React, { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react';
+import { useJsonStorage } from '../hooks/useJsonStorage';
 
 interface JsonData {
   type: string;
@@ -6,13 +7,26 @@ interface JsonData {
   timestamp: number;
 }
 
+export interface JsonPackage {
+  id: string;
+  name: string;
+  data: JsonData[];
+  timestamp: number;
+}
+
 interface JsonCollectorContextType {
   addJson: (data: any) => void;
   getAllJson: () => JsonData[];
-  clearJson: () => void;
+  getCurrentPackage: () => JsonPackage | undefined;
+  getAllPackages: () => JsonPackage[];
+  clearCurrentPackage: () => void;
+  deletePackage: (id: string) => void;
+  getPackageByName: (name: string) => JsonPackage | undefined;
   isCollecting: boolean;
   setIsCollecting: (value: boolean) => void;
   onJsonUpdate: (callback: (data: JsonData[]) => void) => () => void;
+  deletePackageByName: (name: string) => void;
+  clearAllPackages: () => void;
 }
 
 const JsonCollectorContext = createContext<JsonCollectorContextType | undefined>(undefined);
@@ -20,32 +34,103 @@ const JsonCollectorContext = createContext<JsonCollectorContextType | undefined>
 export function JsonCollectorProvider({ children }: { children: React.ReactNode }) {
   const [isCollecting, setIsCollecting] = useState(false);
   const jsonDataRef = useRef<JsonData[]>([]);
+  const packagesRef = useRef<JsonPackage[]>([]);
+  const currentPackageIdRef = useRef<string | null>(null);
+  const { savePackages, loadPackages, clearPackages, deletePackageByName: deleteStoredPackageByName } = useJsonStorage();
   const callbacksRef = useRef<Set<(data: JsonData[]) => void>>(new Set());
+
+  // 初始化时加载保存的包
+  useEffect(() => {
+    const savedPackages = loadPackages();
+    if (savedPackages.length > 0) {
+      packagesRef.current = savedPackages;
+    }
+  }, [loadPackages]);
+
+  // 当包发生变化时保存
+  const saveCurrentPackages = useCallback(() => {
+    savePackages(packagesRef.current);
+  }, [savePackages]);
+
+  // 修改创建新包的方法
+  const createNewPackage = (name?: string) => {
+    const newPackage: JsonPackage = {
+      id: `package-${Date.now()}`,
+      name: name || 'unnamed',
+      data: [],
+      timestamp: Date.now()
+    };
+
+    if (name) {
+      const existingPackageIndex = packagesRef.current.findIndex(pkg => pkg.name === name);
+      if (existingPackageIndex !== -1) {
+        packagesRef.current.splice(existingPackageIndex, 1);
+      }
+    }
+
+    packagesRef.current.push(newPackage);
+    currentPackageIdRef.current = newPackage.id;
+    saveCurrentPackages(); // 保存更改
+    return newPackage;
+  };
+
+  // 获取当前数据包
+  const getCurrentPackage = () => {
+    if (!currentPackageIdRef.current) {
+      return undefined;  // 如果没有当前包，返回 undefined
+    }
+    return packagesRef.current.find(pkg => pkg.id === currentPackageIdRef.current);
+  };
+
+  // 完成当前数据包
+  const finalizeCurrentPackage = () => {
+    const currentPackage = getCurrentPackage();
+    if (currentPackage && jsonDataRef.current.length > 0) {
+      currentPackage.data = [...jsonDataRef.current];
+      currentPackageIdRef.current = null;
+      jsonDataRef.current = [];
+      saveCurrentPackages(); // 添加这行来保存更新后的数据
+    }
+  };
 
   const addJson = (data: any) => {
     try {
-      console.log('Received data:', data);
-      
+      // 如果是对象，直接处理
       if (typeof data === 'object' && data !== null) {
         handleNormalizedData(data);
         return;
       }
 
       if (typeof data === 'string') {
-        // 尝试直接解析
+        // console.log('Received string data:', data); // 调试日志
+
+        // 检查是否是 workflow 消息
+        if (data.includes('"category":"workflow"')) {
+          try {
+            // 特殊处理 workflow 消息
+            const workflowData = {
+              type: 'msg',
+              category: 'workflow',
+              data: data.match(/"data":\s*(\$[^"}]+|#[^"}]+|[^"}]+)/)?.[1] || ''
+            };
+            handleNormalizedData(workflowData);
+            return;
+          } catch (e) {
+            console.error('Failed to process workflow message:', e, '\nOriginal data:', data);
+          }
+        }
+
+        // 其他消息的正常处理流程
         try {
           const parsed = JSON.parse(data);
           handleNormalizedData(parsed);
-          return;
         } catch (e) {
-          // 如果直接解析失败，尝试修复和清理
           const cleanedStr = cleanJsonString(data);
           try {
             const parsed = JSON.parse(cleanedStr);
             handleNormalizedData(parsed);
           } catch (e) {
             console.error('Failed to parse cleaned JSON:', e);
-            // 如果还是失败，尝试提取部分有效的 JSON
             tryExtractPartialJson(cleanedStr);
           }
         }
@@ -55,23 +140,23 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
     }
   };
 
-  // 尝试提取部分有效的 JSON
+  // Try to extract valid partial JSON
   const tryExtractPartialJson = (str: string) => {
     try {
-      // 查找完整的 message 部分
+      // Find complete message section
       const messageMatch = str.match(/"message"\s*:\s*"[^"]*"/);
       const typeMatch = str.match(/"type"\s*:\s*"[^"]*"/);
       const stateMatch = str.match(/"state"\s*:\s*"[^"]*"/);
       const categoryMatch = str.match(/"category"\s*:\s*"[^"]*"/);
 
       if (messageMatch && typeMatch && stateMatch && categoryMatch) {
-        // 添加 data 到类型定义
+        // Add data to type definition
         const partialJson: { 
           type: string; 
           state: string; 
           category: string; 
           message: string;
-          data?: any;  // 添加可选的 data 属性
+          data?: any;  // Add optional data property
         } = {
           type: JSON.parse(`{${typeMatch[0]}}`).type,
           state: JSON.parse(`{${stateMatch[0]}}`).state,
@@ -79,12 +164,12 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
           message: JSON.parse(`{${messageMatch[0]}}`).message
         };
 
-        // 尝试提取 data 部分（如果存在）
+        // Try to extract data section (if exists)
         const dataStart = str.indexOf('"data"');
         if (dataStart !== -1) {
           try {
             let dataStr = str.slice(dataStart);
-            // 找到完整的 data 对象或数组
+            // Find complete data object or array
             const extracted = extractBalancedJson(dataStr);
             if (extracted) {
               const dataObj = JSON.parse(`{${extracted}}`);
@@ -102,7 +187,7 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
     }
   };
 
-  // 提取平衡的 JSON 字符串
+  // Extract balanced JSON string
   const extractBalancedJson = (str: string): string | null => {
     let depth = 0;
     let inQuote = false;
@@ -130,24 +215,24 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
     return null;
   };
 
-  // 清理 JSON 字符串
+  // Clean JSON string
   const cleanJsonString = (str: string): string => {
     let cleaned = str;
     
-    // 基本清理
+    // Basic cleaning
     cleaned = cleaned.trim();
     cleaned = cleaned.replace(/^\uFEFF/, '');
     cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
     
-    // 修复省略号和空的 data 字段
-    cleaned = cleaned.replace(/\.{3,}/g, '...');  // 统一省略号格式
-    cleaned = cleaned.replace(/"data"\s*:\s*\}/, '"data": null}');  // 空 data 转为 null
+    // Fix ellipsis and empty data fields
+    cleaned = cleaned.replace(/\.{3,}/g, '...');  // Standardize ellipsis format
+    cleaned = cleaned.replace(/"data"\s*:\s*\}/, '"data": null}');  // Convert empty data to null
     
-    // 修复缺少的逗号
+    // Fix missing commas
     cleaned = cleaned.replace(/"([^"]+)"\s+"([^"]+)"/g, '"$1","$2"');
     cleaned = cleaned.replace(/"message"\s*:\s*"([^"]*)"\s*"data"/, '"message":"$1","data"');
     
-    // 确保 JSON 对象的完整性
+    // Ensure JSON object completeness
     if (!cleaned.endsWith('}')) {
       const lastBrace = cleaned.lastIndexOf('}');
       if (lastBrace !== -1) {
@@ -158,17 +243,55 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
     return cleaned;
   };
 
-  // 处理规范化后的数据
+  // Handle normalized data
   const handleNormalizedData = (data: any) => {
-    jsonDataRef.current.push({
-      type: data.type || 'unknown',
-      content: data,
-      timestamp: Date.now()
-    });
-    
-    callbacksRef.current.forEach(callback => {
-      callback(jsonDataRef.current);
-    });
+    // 处理 workflow 类型消息
+    if (data.category === 'workflow' && data.type === 'msg') {
+      // 如果有 data 字段，说明是开始收集
+      if (data.data) {
+        setIsCollecting(true);  // 开始收集时设置为 true
+        const rawName = data.data;
+        const packageName = String(rawName).startsWith('$') || String(rawName).startsWith('#')
+          ? String(rawName).slice(1)
+          : String(rawName);
+        createNewPackage(packageName);
+        return;
+      }
+      
+      // 如果有 message 字段且值为 'done'，说明完成收集
+      if (data.message === 'done') {
+        finalizeCurrentPackage();
+        setIsCollecting(false);  // 完成收集时设置为 false
+        return;
+      }
+    }
+
+    // 确保有当前包时才添加数据
+    if (currentPackageIdRef.current) {
+      // console.log('Adding data to package:', data);
+
+      const newData = {
+        type: data.type || 'unknown',
+        content: data,
+        timestamp: Date.now()
+      };
+      
+      jsonDataRef.current.push(newData);
+      
+      // 实时更新当前包的数据
+      const currentPackage = packagesRef.current.find(
+        pkg => pkg.id === currentPackageIdRef.current
+      );
+      if (currentPackage) {
+        currentPackage.data = [...jsonDataRef.current];
+        // 触发保存以确保数据持久化
+        saveCurrentPackages();
+      }
+
+      callbacksRef.current.forEach(callback => {
+        callback(jsonDataRef.current);
+      });
+    }
   };
 
   const onJsonUpdate = (callback: (data: JsonData[]) => void) => {
@@ -179,14 +302,55 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
     };
   };
 
-  // 获取所有收集的 JSON 数据
+  // Get all collected JSON data
   const getAllJson = () => {
     return jsonDataRef.current;
   };
 
-  // 清空收集的数据
-  const clearJson = () => {
+  // Get all packages
+  const getAllPackages = () => {
+    return packagesRef.current;
+  };
+
+  // Delete a package
+  const deletePackage = (id: string) => {
+    packagesRef.current = packagesRef.current.filter(pkg => pkg.id !== id);
+    if (currentPackageIdRef.current === id) {
+      currentPackageIdRef.current = null;
+    }
+    saveCurrentPackages(); // 保存更改
+  };
+
+  // Clear current package
+  const clearCurrentPackage = () => {
+    if (currentPackageIdRef.current) {
+      deletePackage(currentPackageIdRef.current);
+    }
     jsonDataRef.current = [];
+    setIsCollecting(false);  // 清理当前包时重置状态
+  };
+
+  // 获取包的方法也需要支持按名称查找
+  const getPackageByName = (name: string) => {
+    return packagesRef.current.find(pkg => pkg.name === name);
+  };
+
+  // 添加按名称删除包的方法
+  const deletePackageByName = (name: string) => {
+    const packageToDelete = packagesRef.current.find(pkg => pkg.name === name);
+    if (packageToDelete) {
+      deletePackage(packageToDelete.id);  // 复用现有的 deletePackage 方法
+      deleteStoredPackageByName(name);    // 同时从存储中删除
+    }
+  };
+
+  // 清除所有包
+  const clearAllPackages = () => {
+    packagesRef.current = [];
+    currentPackageIdRef.current = null;
+    jsonDataRef.current = [];
+    clearPackages();  // 清除存储
+    setIsCollecting(false);  // 清理时重置状态
   };
 
   return (
@@ -194,10 +358,16 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
       value={{
         addJson,
         getAllJson,
-        clearJson,
+        getCurrentPackage,
+        getAllPackages,
+        clearCurrentPackage,
+        deletePackage,
+        getPackageByName,
         isCollecting,
         setIsCollecting,
-        onJsonUpdate
+        onJsonUpdate,
+        deletePackageByName,
+        clearAllPackages,
       }}
     >
       {children}
@@ -205,7 +375,7 @@ export function JsonCollectorProvider({ children }: { children: React.ReactNode 
   );
 }
 
-// 自定义 hook 用于访问 context
+// Custom hook for accessing context
 export function useJsonCollector() {
   const context = useContext(JsonCollectorContext);
   if (context === undefined) {

@@ -33,7 +33,7 @@ const lightThemeOptions: ThemeOptions = {
     },
     text: {
       primary: 'rgba(0, 0, 0, 0.87)',
-      secondary: 'rgba(0, 0, 0, 0.6)',
+      secondary: 'rgba(0, 0, 0, 0.4)',
     },
     divider: 'rgba(0, 0, 0, 0.12)',
     grey: Gray,
