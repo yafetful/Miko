@@ -1,0 +1,22 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "retry": "Retry"
+  },
+  "chat": {
+    "placeholder": "Type a message...",
+    "thinking": "Thinking...",
+    "error": "An error occurred"
+  },
+  "language": {
+    "select": "Please Select Language",
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語",
+    "ko": "한국어",
+    "fr": "Français",
+    "es": "Español"
+  }
+} 

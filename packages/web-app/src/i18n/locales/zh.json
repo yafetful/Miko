@@ -1,0 +1,22 @@
+{
+  "common": {
+    "confirm": "确认",
+    "cancel": "取消",
+    "loading": "加载中...",
+    "retry": "重试"
+  },
+  "chat": {
+    "placeholder": "请输入消息...",
+    "thinking": "思考中...",
+    "error": "发生错误"
+  },
+  "language": {
+    "select": "请选择语言",
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語",
+    "ko": "한국어",
+    "fr": "Français",
+    "es": "Español"
+  }
+} 

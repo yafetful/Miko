@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ThemeProvider, CssBaseline, IconButton, Box } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
+import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lightTheme, darkTheme } from './theme';
 import { ChatPage } from './pages/ChatPage';
@@ -14,20 +13,12 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Global } from '@emotion/react';
 import { globalStyles } from './theme/globalStyles';
 import { JsonCollectorProvider } from './contexts/JsonCollectorContext';
+import { initI18n } from './i18n/i18n';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 function App() {
-  console.log('App rendered', {
-    env: {
-      clientId: process.env.REACT_APP_COZE_CLIENT_ID,
-      baseUrl: process.env.REACT_APP_COZE_BASE_URL,
-      url: process.env.REACT_APP_URL,
-    },
-    isDev: import.meta.env.DEV,
-    mode: import.meta.env.MODE,
-  });
-
+  const [isI18nReady, setIsI18nReady] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('theme-mode');
     return savedMode === 'dark' || (!savedMode && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -37,15 +28,40 @@ function App() {
     localStorage.setItem('theme-mode', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  // 可以根据需要选择网络
-  const network = WalletAdapterNetwork.Devnet;
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await initI18n();
+        setIsI18nReady(true);
+      } catch (error) {
+        console.error('Failed to initialize i18n:', error);
+      }
+    };
+    init();
+  }, []);
+
+  const network = WalletAdapterNetwork.Mainnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   
-  // 初始化钱包适配器
   const wallets = useMemo(
     () => [new PhantomWalletAdapter()],
     []
   );
+
+  if (!isI18nReady) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh' 
+        }}
+      >
+        Loading...
+      </Box>
+    );
+  }
 
   return (
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
@@ -59,14 +75,13 @@ function App() {
                 <ChatProvider>
                   <JsonCollectorProvider>
                     <Router>
-                      <IconButton
-                        onClick={() => setIsDarkMode(!isDarkMode)}
-                        sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}
-                      >
-                        {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-                      </IconButton>
                       <Routes>
-                        <Route path="/" element={<ChatPage />} />
+                        <Route path="/" element={
+                          <ChatPage 
+                            isDarkMode={isDarkMode}
+                            onThemeChange={setIsDarkMode}
+                          />
+                        } />
                       </Routes>
                     </Router>
                   </JsonCollectorProvider>

@@ -59,7 +59,7 @@ const darkThemeOptions: ThemeOptions = {
     },
     background: {
       default: Gray[900],
-      paper: '#1e1e1e',
+      paper: '#2a2a2a',
     },
     text: {
       primary: 'rgba(255, 255, 255, 0.87)',

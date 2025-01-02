@@ -21,6 +21,8 @@ export default defineConfig(({ mode }) => {
         stream: 'stream-browserify',
         buffer: 'buffer',
         util: 'util',
+        '@': resolve(__dirname, './src'),
+        '@shared': resolve(__dirname, '../shared/src')
       },
     },
     optimizeDeps: {

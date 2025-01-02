@@ -3,9 +3,9 @@ import { Model } from "./model";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 /**
- * three.jsを使った3Dビューワー
+ * 3D viewer using three.js
  *
- * setup()でcanvasを渡してから使う
+ * Must call setup() with canvas before use
  */
 export class Viewer {
   public isReady: boolean;
@@ -54,13 +54,12 @@ export class Viewer {
         obj.frustumCulled = false;
       });
 
-
       this._scene.add(this.model.vrm.scene);
 
-      // 加载并开始播放动画
+      // Load and start animations
       await this.model.loadAnimations();
 
-      // HACK: アニメーションの原点がずれているので再生後にカメラ位置を調整する
+      // HACK: Adjust camera position after animation starts due to offset origin
       requestAnimationFrame(() => {
         this.resetCamera();
       });
@@ -75,7 +74,7 @@ export class Viewer {
   }
 
   /**
-   * Reactで管理しているCanvasを後から設定する
+   * Set up the Canvas managed by React
    */
   public setup(canvas: HTMLCanvasElement) {
     const parentElement = canvas.parentElement;
@@ -93,20 +92,20 @@ export class Viewer {
 
     // camera
     this._camera = new THREE.PerspectiveCamera(
-      24.0,    // fov (Field of View) - 视野角度，值越大视野越广
-      width / height,  // aspect - 宽高比，通常是容器的宽度除以高度
-      0.1,     // near - 近平面，小于这个距离的物体不会被渲染
-      20.0     // far - 远平面，大于这个距离的物体不会被渲染
+      24.0,    // fov - Field of View, larger value means wider view
+      width / height,  // aspect - width/height ratio of the container
+      0.1,     // near - objects closer than this won't be rendered
+      20.0     // far - objects further than this won't be rendered
     );
     this._camera.position.set(
-      0,    // x - 左右位置，正值向右移动
-      1.3,  // y - 上下位置，正值向上移动
-      1.8   // z - 前后位置，正值向后移动（远离物体），负值向前移动（靠近物体）
+      0,    // x - left/right position, positive moves right
+      1.3,  // y - up/down position, positive moves up
+      1.8   // z - front/back position, positive moves back (away from object), negative moves forward
     );
     this._cameraControls?.target.set(
-      0,    // x - 目标点的左右位置
-      1.3,  // y - 目标点的上下位置
-      0     // z - 目标点的前后位置
+      0,    // x - target point left/right
+      1.3,  // y - target point up/down
+      0     // z - target point front/back
     );
     // camera controls
     this._cameraControls = new OrbitControls(
@@ -124,7 +123,7 @@ export class Viewer {
   }
 
   /**
-   * canvasの親要素を参照してサイズを変更する
+   * Resize canvas based on parent element dimensions
    */
   public resize() {
     if (!this._renderer) return;
@@ -145,7 +144,7 @@ export class Viewer {
   }
 
   /**
-   * VRMのheadノードを参照してカメラ位置を調整する
+   * Adjust camera position by referencing VRM's head node
    */
   public resetCamera() {
     const headNode = this.model?.vrm?.humanoid.getNormalizedBoneNode("head");
@@ -179,5 +178,21 @@ export class Viewer {
     const intensity = isDarkMode ? 0.7 : 1.4;
     this._directionalLight.intensity = intensity;
     this._ambientLight.intensity = intensity;
+  }
+
+  /**
+   * Reset all VRM expressions to neutral state
+   */
+  public resetExpressions() {
+    if (this.model?.vrm?.expressionManager) {
+      const manager = this.model.vrm.expressionManager;
+      // Reset all possible expressions
+      manager.setValue("happy", 0);
+      manager.setValue("angry", 0);
+      manager.setValue("sad", 0);
+      manager.setValue("relaxed", 0);
+      manager.setValue("neutral", 1);  // Set neutral as default
+      this.model.vrm.update(this._clock.getDelta());
+    }
   }
 }

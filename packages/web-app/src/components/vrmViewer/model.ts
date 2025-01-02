@@ -5,10 +5,9 @@ import { VRMAnimation } from "../../lib/VRMAnimation/VRMAnimation";
 import { VRMLookAtSmootherLoaderPlugin } from "../../lib/VRMLookAtSmootherLoaderPlugin/VRMLookAtSmootherLoaderPlugin";
 import { LipSync } from "../lipSync/lipSync";
 import { EmoteController } from "../emoteController/emoteController";
-import { Screenplay } from "../messages/messages";
+import { Screenplay, LocalScreenplay } from "../messages/messages";
 import { loadVRMAnimation } from "../../lib/VRMAnimation/loadVRMAnimation";
 import { buildUrl } from "../../utils/buildUrl";
-
 
 /**
  * 3Dキャラクターを管理するクラス
@@ -84,7 +83,7 @@ export class Model {
   /**
    * 音声を再生し、リップシンクを行う
    */
-  public async speak(buffer: ArrayBuffer, screenplay: Screenplay) {
+  public async speak(buffer: ArrayBuffer, screenplay: Screenplay | LocalScreenplay) {
     this.emoteController?.playEmotion(screenplay.expression);
     await new Promise((resolve) => {
       this._lipSync?.playFromArrayBuffer(buffer, () => {

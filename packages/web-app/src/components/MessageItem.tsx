@@ -1,6 +1,11 @@
-import React from 'react';
-import { Box, Paper, Typography, Avatar } from '@mui/material';
+import React, { useContext } from 'react';
+import { Box, Paper, Typography, Avatar, IconButton } from '@mui/material';
 import { keyframes } from '@mui/material/styles';
+import { ViewerContext } from './vrmViewer/viewerContext';
+import { speakCharacter } from './messages/speakCharacter';
+import { DuotoneIcon } from './DuotoneIcon';
+import { VoicePresets, type LanguageCode } from '@shared/elevenlabs';
+import { useTranslation } from '../hooks/useTranslation';
 
 // 动画定义
 const moveUpAnimation = keyframes`
@@ -43,6 +48,36 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   isEntering,
 }) => {
   const isUser = message.role === 'User';
+  const { viewer } = useContext(ViewerContext);
+  const { currentLocale } = useTranslation();
+  
+  const handleSpeak = () => {
+    if (!isUser) {
+      const langCode = currentLocale as LanguageCode;
+      console.log('Current language code:', langCode);
+
+      const voiceId = VoicePresets[langCode]?.voice_id || VoicePresets.en.voice_id;
+
+      speakCharacter(
+        {
+          expression: "neutral",
+          talk: {
+            message: message.content,
+            style: "talk",
+            speakerX: 0,
+            speakerY: 0
+          },
+          voice_id: voiceId,
+          timestamp: message.timestamp
+        },
+        viewer,
+        undefined,
+        () => {
+          viewer?.resetExpressions();
+        }
+      );
+    }
+  };
 
   return (
     <Box
@@ -106,14 +141,31 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         backgroundColor: 'background.paper',
         boxShadow: 3,
         display: 'inline-block',
+        position: 'relative'
       }}>
-        <Typography sx={{ 
-          whiteSpace: 'pre-wrap', 
-          wordBreak: 'break-word',
-          maxWidth: '100%',
-        }}>
-          {message.content}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{ 
+            whiteSpace: 'pre-wrap', 
+            wordBreak: 'break-word',
+            maxWidth: '100%',
+          }}>
+            {message.content}
+          </Typography>
+          {!isUser && (
+            <IconButton
+              onClick={handleSpeak}
+              size="small"
+              sx={{
+                opacity: 0.6,
+                '&:hover': {
+                  opacity: 1
+                }
+              }}
+            >
+              <DuotoneIcon icon="solar:volume-loud-bold-duotone" size="small" />
+            </IconButton>
+          )}
+        </Box>
       </Paper>
     </Box>
   );

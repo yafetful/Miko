@@ -21,7 +21,8 @@
     "@coze/api": "^1.0.14",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",
-    "@solana/web3.js": "^1.98.0"
+    "@solana/web3.js": "^1.98.0",
+    "elevenlabs": "^1.50.2"
   },
   "peerDependencies": {
     "react": "^18.0.0"
