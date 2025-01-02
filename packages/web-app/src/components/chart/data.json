@@ -1,0 +1,363 @@
+{
+    "config": {
+      "interval": "1d",
+      "topic": "bitcoin",
+      "metrics": "all",
+      "bucket": "hour",
+      "start": 1735689600,
+      "end": 1735862400,
+      "generated": 1735815479
+    },
+    "data": [
+      {
+        "time": 1735689600,
+        "posts_created": 1111,
+        "posts_active": 43993,
+        "interactions": 2520129,
+        "contributors_created": 875,
+        "contributors_active": 21543,
+        "sentiment": 78,
+        "spam": 240
+      },
+      {
+        "time": 1735693200,
+        "posts_created": 1182,
+        "posts_active": 44320,
+        "interactions": 2716192,
+        "contributors_created": 851,
+        "contributors_active": 21757,
+        "sentiment": 78,
+        "spam": 262
+      },
+      {
+        "time": 1735696800,
+        "posts_created": 910,
+        "posts_active": 41766,
+        "interactions": 2478199,
+        "contributors_created": 665,
+        "contributors_active": 20535,
+        "sentiment": 78,
+        "spam": 248
+      },
+      {
+        "time": 1735700400,
+        "posts_created": 992,
+        "posts_active": 40123,
+        "interactions": 2393307,
+        "contributors_created": 704,
+        "contributors_active": 19954,
+        "sentiment": 78,
+        "spam": 258
+      },
+      {
+        "time": 1735704000,
+        "posts_created": 1012,
+        "posts_active": 40430,
+        "interactions": 2387568,
+        "contributors_created": 702,
+        "contributors_active": 20093,
+        "sentiment": 78,
+        "spam": 258
+      },
+      {
+        "time": 1735707600,
+        "posts_created": 1222,
+        "posts_active": 39730,
+        "interactions": 2162351,
+        "contributors_created": 899,
+        "contributors_active": 19623,
+        "sentiment": 79,
+        "spam": 327
+      },
+      {
+        "time": 1735711200,
+        "posts_created": 1417,
+        "posts_active": 39961,
+        "interactions": 2240663,
+        "contributors_created": 1040,
+        "contributors_active": 19796,
+        "sentiment": 79,
+        "spam": 310
+      },
+      {
+        "time": 1735714800,
+        "posts_created": 1641,
+        "posts_active": 40786,
+        "interactions": 2072384,
+        "contributors_created": 1039,
+        "contributors_active": 20145,
+        "sentiment": 78,
+        "spam": 378
+      },
+      {
+        "time": 1735718400,
+        "posts_created": 1681,
+        "posts_active": 41759,
+        "interactions": 2001519,
+        "contributors_created": 1112,
+        "contributors_active": 20610,
+        "sentiment": 79,
+        "spam": 400
+      },
+      {
+        "time": 1735722000,
+        "posts_created": 1311,
+        "posts_active": 41003,
+        "interactions": 2156805,
+        "contributors_created": 961,
+        "contributors_active": 20317,
+        "sentiment": 79,
+        "spam": 346
+      },
+      {
+        "time": 1735725600,
+        "posts_created": 996,
+        "posts_active": 42196,
+        "interactions": 2444228,
+        "contributors_created": 778,
+        "contributors_active": 20568,
+        "sentiment": 79,
+        "spam": 264
+      },
+      {
+        "time": 1735729200,
+        "posts_created": 1400,
+        "posts_active": 42822,
+        "interactions": 2522979,
+        "contributors_created": 988,
+        "contributors_active": 21064,
+        "sentiment": 79,
+        "spam": 536
+      },
+      {
+        "time": 1735732800,
+        "posts_created": 1902,
+        "posts_active": 43415,
+        "interactions": 2654140,
+        "contributors_created": 1437,
+        "contributors_active": 21431,
+        "sentiment": 79,
+        "spam": 498
+      },
+      {
+        "time": 1735736400,
+        "posts_created": 2174,
+        "posts_active": 47038,
+        "interactions": 2928803,
+        "contributors_created": 1496,
+        "contributors_active": 22668,
+        "sentiment": 79,
+        "spam": 499
+      },
+      {
+        "time": 1735740000,
+        "posts_created": 1984,
+        "posts_active": 47028,
+        "interactions": 3237611,
+        "contributors_created": 1414,
+        "contributors_active": 22646,
+        "sentiment": 79,
+        "spam": 588
+      },
+      {
+        "time": 1735743600,
+        "posts_created": 2071,
+        "posts_active": 48415,
+        "interactions": 3542826,
+        "contributors_created": 1553,
+        "contributors_active": 23456,
+        "sentiment": 79,
+        "spam": 573
+      },
+      {
+        "time": 1735747200,
+        "posts_created": 2287,
+        "posts_active": 49086,
+        "interactions": 3978480,
+        "contributors_created": 1632,
+        "contributors_active": 23754,
+        "sentiment": 79,
+        "spam": 569
+      },
+      {
+        "time": 1735750800,
+        "posts_created": 2985,
+        "posts_active": 47751,
+        "interactions": 4080804,
+        "contributors_created": 2140,
+        "contributors_active": 23205,
+        "sentiment": 79,
+        "spam": 521
+      },
+      {
+        "time": 1735754400,
+        "posts_created": 2692,
+        "posts_active": 47790,
+        "interactions": 4349221,
+        "contributors_created": 2205,
+        "contributors_active": 23476,
+        "sentiment": 79,
+        "spam": 409
+      },
+      {
+        "time": 1735758000,
+        "posts_created": 1624,
+        "posts_active": 48859,
+        "interactions": 4383109,
+        "contributors_created": 1227,
+        "contributors_active": 23689,
+        "sentiment": 79,
+        "spam": 368
+      },
+      {
+        "time": 1735761600,
+        "posts_created": 1558,
+        "posts_active": 47731,
+        "interactions": 4423584,
+        "contributors_created": 1196,
+        "contributors_active": 22928,
+        "sentiment": 79,
+        "spam": 354
+      },
+      {
+        "time": 1735765200,
+        "posts_created": 1422,
+        "posts_active": 47227,
+        "interactions": 4529873,
+        "contributors_created": 1059,
+        "contributors_active": 22832,
+        "sentiment": 79,
+        "spam": 318
+      },
+      {
+        "time": 1735768800,
+        "posts_created": 1431,
+        "posts_active": 45056,
+        "interactions": 4543646,
+        "contributors_created": 1091,
+        "contributors_active": 21747,
+        "sentiment": 79,
+        "spam": 305
+      },
+      {
+        "time": 1735772400,
+        "posts_created": 1190,
+        "posts_active": 44740,
+        "interactions": 4451069,
+        "contributors_created": 824,
+        "contributors_active": 21223,
+        "sentiment": 79,
+        "spam": 273
+      },
+      {
+        "time": 1735776000,
+        "posts_created": 1106,
+        "posts_active": 44983,
+        "interactions": 4039779,
+        "contributors_created": 855,
+        "contributors_active": 21362,
+        "sentiment": 79,
+        "spam": 268
+      },
+      {
+        "time": 1735779600,
+        "posts_created": 1367,
+        "posts_active": 44143,
+        "interactions": 4008909,
+        "contributors_created": 998,
+        "contributors_active": 21299,
+        "sentiment": 79,
+        "spam": 303
+      },
+      {
+        "time": 1735783200,
+        "posts_created": 1327,
+        "posts_active": 43416,
+        "interactions": 3840163,
+        "contributors_created": 1002,
+        "contributors_active": 20927,
+        "sentiment": 79,
+        "spam": 314
+      },
+      {
+        "time": 1735786800,
+        "posts_created": 1124,
+        "posts_active": 42830,
+        "interactions": 3731410,
+        "contributors_created": 789,
+        "contributors_active": 20463,
+        "sentiment": 79,
+        "spam": 366
+      },
+      {
+        "time": 1735790400,
+        "posts_created": 1354,
+        "posts_active": 44282,
+        "interactions": 3719070,
+        "contributors_created": 970,
+        "contributors_active": 21024,
+        "sentiment": 79,
+        "spam": 414
+      },
+      {
+        "time": 1735794000,
+        "posts_created": 1759,
+        "posts_active": 43278,
+        "interactions": 3716889,
+        "contributors_created": 1224,
+        "contributors_active": 20783,
+        "sentiment": 79,
+        "spam": 527
+      },
+      {
+        "time": 1735797600,
+        "posts_created": 1911,
+        "posts_active": 42183,
+        "interactions": 4154921,
+        "contributors_created": 1336,
+        "contributors_active": 20475,
+        "sentiment": 79,
+        "spam": 480
+      },
+      {
+        "time": 1735801200,
+        "posts_created": 1671,
+        "posts_active": 42712,
+        "interactions": 3734447,
+        "contributors_created": 1178,
+        "contributors_active": 20752,
+        "sentiment": 79,
+        "spam": 453
+      },
+      {
+        "time": 1735804800,
+        "posts_created": 1824,
+        "posts_active": 51823,
+        "interactions": 4053904,
+        "contributors_created": 519,
+        "contributors_active": 15002,
+        "sentiment": 61,
+        "spam": 11615
+      },
+      {
+        "time": 1735808400,
+        "posts_created": 1328,
+        "posts_active": 50567,
+        "interactions": 6292563,
+        "contributors_created": 382,
+        "contributors_active": 14552,
+        "sentiment": 64,
+        "spam": 11482
+      },
+      {
+        "time": 1735812000,
+        "posts_created": 1234,
+        "posts_active": 48022,
+        "interactions": 4456773,
+        "contributors_created": 406,
+        "contributors_active": 13979,
+        "sentiment": 61,
+        "spam": 10863
+      }
+    ]
+  }

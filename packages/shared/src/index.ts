@@ -8,6 +8,7 @@ export * from './hooks/useCozeClient';
 export * from './types/commands';
 export * from './services/command-service';
 export * from './elevenlabs';
+export * from './services/lunarcrush';
 
 export const sayHello = () => {
   return "Hello from shared package!";

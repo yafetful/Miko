@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Container } from '@mui/material';
 import { ChatDialog } from '../components/ChatDialog';
 import { ChatMessages } from '../components/ChatMessages';
@@ -7,6 +7,9 @@ import VrmViewer from '../components/vrmViewer';
 import { JsonViewer } from '../components/JsonViewer';
 import LanguageSelector, { Language, getStoredLanguage } from '../components/LanguageSelector';
 import { MenuBar } from '../components/menu/index';
+import { Chart } from '../components/chart';
+import { ChartSlider } from '../components/chart/ChartSlider';
+import mockData from '../components/chart/data.json';
 
 interface ChatPageProps {
   isDarkMode: boolean;
@@ -15,19 +18,42 @@ interface ChatPageProps {
 
 export const ChatPage: React.FC<ChatPageProps> = ({ isDarkMode, onThemeChange }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(() => getStoredLanguage());
+  const [sliderValue, setSliderValue] = useState(0);
+  const chartRef = useRef<any>(null);
 
   const handleLanguageSelect = (language: Language) => {
     setSelectedLanguage(language);
   };
 
+  const handleSliderChange = (value: number) => {
+    setSliderValue(value);
+    if (chartRef.current?.updateDataPoint) {
+      chartRef.current.updateDataPoint(value);
+    }
+  };
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ position: 'relative', zIndex: 1001 }}>
+        <MenuBar 
+          isDarkMode={isDarkMode}
+          onThemeChange={onThemeChange}
+          showLanguageMenu={!!selectedLanguage}
+          sliderValue={sliderValue}
+          sliderMax={mockData.data.length - 1}
+          onSliderChange={handleSliderChange}
+        />
+      </Box>
+
+      <Box sx={{ position: 'relative', zIndex: 0 }}>
+        <Chart 
+          type='line' 
+          height={800}
+          ref={chartRef}
+        />
+      </Box>
+
       <VrmViewer />
-      <MenuBar 
-        isDarkMode={isDarkMode}
-        onThemeChange={onThemeChange}
-        showLanguageMenu={!!selectedLanguage}
-      />
       
       {!selectedLanguage ? (
         <Box sx={{
@@ -42,7 +68,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ isDarkMode, onThemeChange })
         </Box>
       ) : (
         <>
-          {/* Chat area at the bottom */}
           <Box sx={{ 
             position: 'fixed',
             bottom: 64,
@@ -64,7 +89,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ isDarkMode, onThemeChange })
                 position: 'relative',
                 zIndex: 1,
               }}>
-                {/* Message display area */}
                 <Box sx={{ 
                   flex: 1,
                   overflow: 'auto',
@@ -72,7 +96,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ isDarkMode, onThemeChange })
                 }}>
                   <ChatMessages />
                 </Box>
-                {/* Animation and input area */}
                 <Box>
                   <SpineAnimation />
                   <ChatDialog />
@@ -80,7 +103,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({ isDarkMode, onThemeChange })
               </Box>
             </Container>
           </Box>
-          <JsonViewer />
+          <Box sx={{ position: 'relative', zIndex: 999 }}>
+            <JsonViewer />
+          </Box>
         </>
       )}
     </Box>
