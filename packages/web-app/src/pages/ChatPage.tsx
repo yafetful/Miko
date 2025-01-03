@@ -8,7 +8,6 @@ import { JsonViewer } from '../components/JsonViewer';
 import LanguageSelector, { Language, getStoredLanguage } from '../components/LanguageSelector';
 import { MenuBar } from '../components/menu/index';
 import { Chart } from '../components/chart';
-import { ChartSlider } from '../components/chart/ChartSlider';
 import mockData from '../components/chart/data.json';
 
 interface ChatPageProps {

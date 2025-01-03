@@ -45,9 +45,11 @@ class LunarCrushService {
     }
   }
 
-  async getBitcoinTimeSeries(interval: string = '1d'): Promise<ApiResponse> {
+  async getTokenTimeSeries(symbol: string = 'bitcoin', interval: string = '1d'): Promise<ApiResponse> {
     try {
-      const response = await this.request<LunarCrushResponse>(`/topic/bitcoin/time-series/v1?interval=${interval}`);
+      const response = await this.request<LunarCrushResponse>(
+        `/topic/${symbol.toLowerCase()}/time-series/v1?interval=${interval}`
+      );
       return {
         data: response.data.map((item: any) => ({
           posts_created: item.posts_created || 0,

@@ -11,8 +11,7 @@ interface ChartProps {
 
 export const Chart = forwardRef<any, ChartProps>((props, ref) => {
   const { type = 'line', ...rest } = props;
-  const { data, loading, error } = useChartData();
-  console.log(data);
+  const { data, loading, error } = useChartData({ symbol: 'eth', interval: '1d' });
 
   const renderChart = () => {
     switch (type) {
